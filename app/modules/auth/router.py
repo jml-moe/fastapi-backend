@@ -1,5 +1,5 @@
 from sqlalchemy.exc import IntegrityError
-from app.modules.auth.utils import hash_password, is_password_valid
+from app.modules.auth.utils import hash_password, is_password_valid, generate_token
 from app.models.database import User
 from app.models.engine import db_session
 from sqlmodel import Session, select
@@ -37,6 +37,7 @@ def login_user(body: LoginUser, db: Session = Depends(db_session)):
     if not is_password_valid(body.password, user.password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials!")
 
-    # Give token / access
+    # Give token / access -> ID
+    token = generate_token({"id": user.id})
 
-    return {"message": "User login success!!"}
+    return {"token": token}
