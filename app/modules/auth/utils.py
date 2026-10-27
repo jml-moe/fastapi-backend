@@ -1,8 +1,10 @@
-from jose.exceptions import ExpiredSignatureError
-from app.core.settings import settings
+from datetime import UTC, datetime, timedelta
+
 import bcrypt
 from jose import jwt
-from datetime import datetime, timedelta
+from jose.exceptions import ExpiredSignatureError, JWTError
+
+from app.core.settings import settings
 
 
 def hash_password(plain_password: str):
@@ -15,7 +17,7 @@ def is_password_valid(plain_password: str, hashed_password: str):
 
 def generate_token(data: dict):
     copied_data = data.copy()
-    copied_data["exp"] = datetime.utcnow() + timedelta(
+    copied_data["exp"] = datetime.now(UTC) + timedelta(
         minutes=settings.JWT_EXPIRE_MINUTES
     )
     return jwt.encode(copied_data, settings.SECRET_KEY, algorithm="HS256")
@@ -27,6 +29,6 @@ def validate_token(token: str):
     except ExpiredSignatureError as e:
         print(e, "Token Expired")
         return None
-    except Exception as e:
+    except JWTError as e:
         print(e)
         return None

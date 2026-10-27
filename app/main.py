@@ -1,7 +1,8 @@
-from app.modules.post.router import post_router
-from app.modules.auth.router import auth_router
 from fastapi import FastAPI
 from scalar_fastapi import get_scalar_api_reference
+
+from app.modules.auth.router import auth_router
+from app.modules.post.router import post_router
 
 app = FastAPI()
 
