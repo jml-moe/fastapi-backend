@@ -5,7 +5,7 @@ from sqlmodel import SQLModel
 
 from alembic import context
 from app.core.settings import settings
-from app.models.database import User  # noqa
+from app.models import database  # noqa: F401  (mendaftarkan semua tabel)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
