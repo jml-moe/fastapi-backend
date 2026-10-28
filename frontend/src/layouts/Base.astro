@@ -1,0 +1,42 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  judul: string;
+  deskripsi?: string;
+  lebar?: 'lebar' | 'sempit';
+}
+
+const {
+  judul,
+  deskripsi = 'Rekomendasi bidang karier developer dari teknologi yang sudah Anda kuasai.',
+  lebar = 'lebar',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={deskripsi} />
+    <link rel="icon" href="data:," />
+    <title>{judul} | Rekomendasi Karier Developer</title>
+  </head>
+  <body>
+    <a class="lompat" href="#isi">Lewati ke konten</a>
+    <header class="kepala">
+      <div class="kepala__dalam">
+        <a class="merek" href="/">Rekomendasi Karier Developer</a>
+        <nav aria-label="Utama" id="navigasi"></nav>
+      </div>
+    </header>
+    <main id="isi" tabindex="-1" class:list={['isi', { 'isi--sempit': lebar === 'sempit' }]}>
+      <slot />
+    </main>
+    <script>
+      import { pasangNavigasi } from '../lib/nav';
+      pasangNavigasi();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+---
+// Tiga keadaan yang wajib ada pada tampilan berdata (memuat, galat, kosong).
+// Halaman mengisi slot `kosong` dan `galat-aksi`; skrip halaman memanggil tampilkan().
+interface Props {
+  memuat?: string;
+}
+const { memuat = 'Memuat data' } = Astro.props;
+---
+
+<p class="memuat" data-keadaan="memuat" role="status">{memuat}</p>
+<div data-keadaan="galat" hidden>
+  <p class="pesan pesan--galat" role="alert" data-pesan-galat></p>
+  <div class="aksi aksi--atas">
+    <slot name="galat-aksi" />
+  </div>
+</div>
+<div class="kosong" data-keadaan="kosong" hidden>
+  <slot name="kosong" />
+</div>

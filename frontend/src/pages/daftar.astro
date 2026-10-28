@@ -1,0 +1,71 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base judul="Buat akun" lebar="sempit">
+  <div class="tumpukan">
+    <h1>Buat akun</h1>
+    <form id="form" class="kartu tumpukan" novalidate>
+      <div class="bidang">
+        <label for="name">Nama</label>
+        <input id="name" name="name" type="text" autocomplete="name" required />
+      </div>
+      <div class="bidang">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required />
+      </div>
+      <div class="bidang">
+        <label for="password">Kata sandi</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" required aria-describedby="petunjuk-sandi" />
+        <span class="petunjuk" id="petunjuk-sandi">Minimal 8 karakter.</span>
+      </div>
+      <p class="pesan pesan--galat" id="galat" role="alert" hidden></p>
+      <button class="tombol" type="submit" id="kirim">Buat akun</button>
+    </form>
+    <p>Sudah punya akun? <a href="/masuk/">Masuk</a></p>
+  </div>
+
+  <script>
+    import { daftar, masuk } from '../lib/auth';
+    import { ApiError } from '../lib/api';
+    import { $ } from '../lib/ui';
+
+    const form = $<HTMLFormElement>('#form');
+    const galat = $('#galat');
+    const kirim = $<HTMLButtonElement>('#kirim');
+
+    function tampilGalat(teks: string) {
+      galat.textContent = teks;
+      galat.hidden = false;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      galat.hidden = true;
+      const data = new FormData(form);
+      const name = String(data.get('name') ?? '').trim();
+      const email = String(data.get('email') ?? '').trim();
+      const password = String(data.get('password') ?? '');
+      if (!name || !email) return tampilGalat('Isi nama dan email.');
+      if (password.length < 8) return tampilGalat('Kata sandi minimal 8 karakter.');
+
+      kirim.disabled = true;
+      kirim.textContent = 'Membuat akun';
+      try {
+        await daftar(name, email, password);
+        await masuk(email, password);
+        location.assign('/rekomendasi/');
+      } catch (err) {
+        tampilGalat(
+          err instanceof ApiError && err.status === 409
+            ? 'Email ini sudah terdaftar. Silakan masuk.'
+            : err instanceof Error
+              ? err.message
+              : 'Terjadi kesalahan.',
+        );
+        kirim.disabled = false;
+        kirim.textContent = 'Buat akun';
+      }
+    });
+  </script>
+</Base>

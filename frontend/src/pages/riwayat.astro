@@ -1,0 +1,61 @@
+---
+import Base from '../layouts/Base.astro';
+import Keadaan from '../components/Keadaan.astro';
+---
+
+<Base judul="Riwayat">
+  <div class="tumpukan" id="halaman">
+    <h1>Riwayat rekomendasi</h1>
+
+    <Keadaan memuat="Memuat riwayat">
+      <Fragment slot="galat-aksi"><button class="tombol tombol--sekunder" type="button" id="ulang">Coba lagi</button></Fragment>
+      <Fragment slot="kosong">
+        <p>Anda belum pernah meminta rekomendasi.</p>
+        <div class="aksi"><a class="tombol" href="/rekomendasi/">Pilih teknologi</a></div>
+      </Fragment>
+    </Keadaan>
+
+    <ul class="peringkat-daftar" id="daftar" data-keadaan="siap" hidden></ul>
+  </div>
+
+  <script>
+    import { api } from '../lib/api';
+    import { wajibMasuk } from '../lib/auth';
+    import { $, angka, el, namaTeknologi, tampilkan, tanggal } from '../lib/ui';
+    import type { RingkasRiwayat } from '../lib/types';
+
+    const halaman = $('#halaman');
+
+    async function muat() {
+      tampilkan(halaman, 'memuat');
+      try {
+        const data = await api<RingkasRiwayat[]>('/recommendations');
+        if (data.length === 0) return tampilkan(halaman, 'kosong');
+        $('#daftar').replaceChildren(
+          ...data.map((r) => {
+            const top = el('ol', { class: 'daftar-bersih' });
+            for (const t of r.top) {
+              top.append(el('li', {}, el('span', {}, t.bidang_karier), el('span', { class: 'skor' }, angka(t.skor))));
+            }
+            const nama = r.teknologi_dipilih.map(namaTeknologi);
+            const ringkas = nama.length > 6 ? `${nama.slice(0, 6).join(', ')}, dan ${nama.length - 6} lainnya` : nama.join(', ');
+            return el(
+              'li',
+              { class: 'kartu hasil' },
+              el('div', { class: 'hasil__kepala' }, el('h2', {}, tanggal(r.created_at)), el('a', { href: `/hasil/?id=${r.id}` }, 'Buka hasil lengkap')),
+              el('p', { class: 'kecil' }, `${nama.length} teknologi: ${ringkas}`),
+              top,
+            );
+          }),
+        );
+        tampilkan(halaman, 'siap');
+      } catch (err) {
+        $('[data-pesan-galat]', halaman).textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        tampilkan(halaman, 'galat');
+      }
+    }
+
+    $('#ulang').addEventListener('click', muat);
+    if (wajibMasuk()) muat();
+  </script>
+</Base>

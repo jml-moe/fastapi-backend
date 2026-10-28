@@ -1,0 +1,166 @@
+---
+import Base from '../../layouts/Base.astro';
+import Keadaan from '../../components/Keadaan.astro';
+---
+
+<Base judul="Kelola dataset">
+  <div class="tumpukan" id="halaman">
+    <div class="tumpukan--rapat">
+      <h1>Kelola dataset</h1>
+      <p class="sub">
+        Unggah dataset survei (.xlsx atau .csv). Pemrosesan berjalan di latar belakang dan memakan sekitar 45
+        detik. Hanya satu versi profil yang aktif dan dipakai untuk rekomendasi.
+      </p>
+    </div>
+
+    <form id="form" class="kartu tumpukan" novalidate>
+      <div class="bidang">
+        <label for="berkas">Berkas dataset</label>
+        <input id="berkas" name="file" type="file" accept=".xlsx,.csv" required aria-describedby="petunjuk-berkas" />
+        <span class="petunjuk" id="petunjuk-berkas">Format .xlsx atau .csv.</span>
+      </div>
+      <p class="pesan pesan--galat" id="galat-unggah" role="alert" hidden></p>
+      <div class="aksi"><button class="tombol" type="submit" id="unggah">Unggah dan proses</button></div>
+    </form>
+
+    <section class="tumpukan--rapat" aria-labelledby="judul-versi">
+      <h2 class="judul-bagian" id="judul-versi">Versi profil</h2>
+      <p class="pesan pesan--info" id="proses" role="status" hidden>Ada versi yang sedang diproses. Daftar diperbarui otomatis.</p>
+      <p class="pesan pesan--sukses" id="sukses" role="status" hidden></p>
+      <p class="pesan pesan--galat" id="galat-aksi" role="alert" hidden></p>
+
+      <Keadaan memuat="Memuat daftar versi">
+        <Fragment slot="galat-aksi"><button class="tombol tombol--sekunder" type="button" id="ulang">Coba lagi</button></Fragment>
+        <Fragment slot="kosong"><p>Belum ada versi profil. Unggah dataset untuk membuat yang pertama.</p></Fragment>
+      </Keadaan>
+
+      <div class="gulir" data-keadaan="siap" role="region" aria-label="Tabel versi profil" tabindex="0" hidden>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" class="angka">ID</th>
+              <th scope="col">Berkas</th>
+              <th scope="col">Status</th>
+              <th scope="col">Dibuat</th>
+              <th scope="col" class="angka">Developer</th>
+              <th scope="col" class="angka">Hit@3 (3 teknologi)</th>
+              <th scope="col">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="versi"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import { api } from '../../lib/api';
+    import { wajibMasuk } from '../../lib/auth';
+    import { $, angka, el, tampilkan, tanggal } from '../../lib/ui';
+    import type { VersiRingkas } from '../../lib/types';
+
+
+    const halaman = $('#halaman');
+    const form = $<HTMLFormElement>('#form');
+    const berkas = $<HTMLInputElement>('#berkas');
+    const unggah = $<HTMLButtonElement>('#unggah');
+    const galatUnggah = $('#galat-unggah');
+    const galatAksi = $('#galat-aksi');
+    const sukses = $('#sukses');
+    const proses = $('#proses');
+    let jadwal: number | undefined;
+
+    const LABEL_STATUS = { processing: 'Diproses', ready: 'Siap', failed: 'Gagal' } as const;
+
+    function hit3(v: VersiRingkas): string {
+      const s = v.metrik?.skenario.find((x) => x.teknologi === 3);
+      const nilai = s?.['Hit@3'];
+      return typeof nilai === 'number' ? angka(nilai) : '-';
+    }
+
+    async function aktifkan(id: number) {
+      galatAksi.hidden = true;
+      sukses.hidden = true;
+      try {
+        await api(`/admin/profile-versions/${id}/activate`, { method: 'POST' });
+        sukses.textContent = `Versi ${id} sekarang aktif dan dipakai untuk rekomendasi.`;
+        sukses.hidden = false;
+        await muat();
+      } catch (err) {
+        galatAksi.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        galatAksi.hidden = false;
+      }
+    }
+
+    function baris(v: VersiRingkas) {
+      const status = v.is_active
+        ? el('span', { class: 'status status--aktif' }, 'Aktif')
+        : el('span', { class: `status status--${v.status}` }, LABEL_STATUS[v.status]);
+      const aksi = el('td', {}, el('a', { href: `/kelola/versi/?id=${v.id}` }, 'Detail'));
+      if (v.status === 'ready' && !v.is_active) {
+        const tombol = el('button', { type: 'button', class: 'tombol tombol--sekunder tombol--kecil' }, 'Jadikan aktif');
+        tombol.addEventListener('click', () => aktifkan(v.id));
+        aksi.append(' ', tombol);
+      }
+      return el(
+        'tr',
+        {},
+        el('td', { class: 'angka' }, String(v.id)),
+        el('td', {}, v.filename),
+        el('td', {}, status),
+        el('td', {}, tanggal(v.created_at)),
+        el('td', { class: 'angka' }, v.n_developer === null ? '-' : angka(v.n_developer)),
+        el('td', { class: 'angka' }, hit3(v)),
+        aksi,
+      );
+    }
+
+    async function muat() {
+      window.clearTimeout(jadwal);
+      try {
+        const data = await api<VersiRingkas[]>('/admin/profile-versions');
+        const berjalan = data.some((v) => v.status === 'processing');
+        proses.hidden = !berjalan;
+        if (berjalan) jadwal = window.setTimeout(muat, 4000);
+        if (data.length === 0) return tampilkan(halaman, 'kosong');
+        $('#versi').replaceChildren(...data.map(baris));
+        tampilkan(halaman, 'siap');
+      } catch (err) {
+        $('[data-pesan-galat]', halaman).textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        tampilkan(halaman, 'galat');
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      galatUnggah.hidden = true;
+      sukses.hidden = true;
+      const file = berkas.files?.[0];
+      if (!file) {
+        galatUnggah.textContent = 'Pilih berkas dataset lebih dulu.';
+        galatUnggah.hidden = false;
+        return;
+      }
+      unggah.disabled = true;
+      unggah.textContent = 'Mengunggah';
+      try {
+        const data = new FormData();
+        data.append('file', file);
+        const r = await api<{ id: number }>('/admin/datasets', { form: data });
+        sukses.textContent = `Berkas diterima sebagai versi ${r.id}. Pemrosesan dimulai.`;
+        sukses.hidden = false;
+        form.reset();
+        await muat();
+      } catch (err) {
+        galatUnggah.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        galatUnggah.hidden = false;
+      } finally {
+        unggah.disabled = false;
+        unggah.textContent = 'Unggah dan proses';
+      }
+    });
+
+    $('#ulang').addEventListener('click', muat);
+    if (wajibMasuk('admin')) muat();
+  </script>
+</Base>
