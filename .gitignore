@@ -17,3 +17,7 @@ wheels/
 
 # Dataset survei (terlalu besar untuk git; letakkan manual atau unggah lewat endpoint Admin)
 data/
+
+# Frontend
+node_modules/
+.astro/

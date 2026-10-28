@@ -3,10 +3,11 @@
 import time
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel
 
-from app.main import app
+from app.main import app, pasang_frontend
 from app.models.engine import engine
 from tests.conftest import DATASET
 
@@ -120,3 +121,28 @@ def test_alur_lengkap_admin_lalu_mahasiswa(client, admin, mhs):
     assert len(riwayat) == 2 and len(riwayat[0]["top"]) == 3
     assert client.get(f"/recommendations/{hasil['id']}", headers=mhs).status_code == 200
     assert client.get(f"/recommendations/{hasil['id']}", headers=admin).status_code == 404
+
+
+def test_frontend_tidak_menimpa_route_api(tmp_path):
+    (tmp_path / "index.html").write_text("<h1>beranda</h1>")
+    (tmp_path / "masuk").mkdir()
+    (tmp_path / "masuk" / "index.html").write_text("<h1>masuk</h1>")
+    (tmp_path / "404.html").write_text("<h1>tidak ada</h1>")
+
+    kecil = FastAPI()
+
+    @kecil.get("/technologies")
+    def api():
+        return {"dari": "api"}
+
+    assert pasang_frontend(kecil, tmp_path)
+    c = TestClient(kecil)
+    assert c.get("/technologies").json() == {"dari": "api"}
+    assert "beranda" in c.get("/").text
+    assert "masuk" in c.get("/masuk/").text
+    r = c.get("/tidak-ada/")
+    assert r.status_code == 404 and "tidak ada" in r.text
+
+
+def test_frontend_dilewati_bila_belum_dibuild(tmp_path):
+    assert not pasang_frontend(FastAPI(), tmp_path / "belum-ada")

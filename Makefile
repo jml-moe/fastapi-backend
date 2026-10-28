@@ -9,3 +9,12 @@ lint:
 
 migrate:
 	uv run alembic upgrade head
+
+fe-install:
+	cd frontend && npm install
+
+fe-dev:
+	cd frontend && npm run dev
+
+fe-build:
+	cd frontend && npm run build
