@@ -5,6 +5,15 @@ build/
 dist/
 wheels/
 *.egg-info
+.pytest_cache/
+.ruff_cache/
 
 # Virtual environments
 .venv
+
+# Secrets and local state
+.env
+*.db
+
+# Dataset survei (terlalu besar untuk git; letakkan manual atau unggah lewat endpoint Admin)
+data/

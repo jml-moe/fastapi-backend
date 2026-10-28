@@ -22,9 +22,7 @@ def register_user(body: RegisterUser, db: Annotated[Session, Depends(db_session)
         db.commit()
     except IntegrityError as e:
         db.rollback()
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, detail="User already exist!"
-        ) from e
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="User already exist!") from e
 
     return {"message": "User register success!"}
 

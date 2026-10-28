@@ -1,6 +1,11 @@
 from sqlmodel import Session, create_engine
 
-engine = create_engine("sqlite:///./database.db")
+from app.core.settings import settings
+
+engine = create_engine(
+    settings.DB_URL,
+    connect_args={"check_same_thread": False} if settings.DB_URL.startswith("sqlite") else {},
+)
 
 
 def db_session():
