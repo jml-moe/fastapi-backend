@@ -18,13 +18,25 @@ Dokumentasi interaktif: <http://localhost:8000/scalar> (atau `/docs`).
 ## Mencoba di Scalar
 
 1. `POST /auth/login` dengan `ADMIN_EMAIL` / `ADMIN_PASSWORD` dari `.env`; salin `token`, tempel di panel **Authentication** (Bearer).
-2. `POST /admin/datasets` — unggah dataset `.xlsx`/`.csv`. Pemrosesan ±45 detik di latar belakang.
+2. `POST /admin/profile-versions` — unggah dataset `.xlsx`/`.csv` (respons 202 + header `Location`). Pemrosesan ±45 detik di latar belakang.
 3. `GET /admin/profile-versions/{id}` sampai `status: ready`; lihat tabel penyaringan, parameter beserta alasannya, dan Hit@3.
-4. `POST /admin/profile-versions/{id}/activate`.
+4. `PATCH /admin/profile-versions/{id}` dengan `{"is_active": true}` untuk mengaktifkan.
 5. `POST /auth/register` lalu `POST /auth/login` sebagai Mahasiswa (ganti token di panel Authentication).
 6. `GET /technologies` untuk kode teknologi, lalu `POST /recommendations` dengan minimal 3, mis.
    `{"teknologi": ["lang:Python", "lang:SQL", "db:PostgreSQL"]}`.
 7. `GET /recommendations` (riwayat) dan `GET /recommendations/{id}` (detail).
+
+## Endpoint (RESTful)
+
+| Sumber daya | Buat | Baca | Ubah | Hapus |
+|---|---|---|---|---|
+| Versi profil (Admin) | `POST /admin/profile-versions` (unggah dataset, 202) | `GET /admin/profile-versions`, `GET /admin/profile-versions/{id}` | `PATCH /admin/profile-versions/{id}` `{"is_active": true\|false}` | `DELETE /admin/profile-versions/{id}` (204) |
+| Rekomendasi (milik sendiri) | `POST /recommendations` | `GET /recommendations`, `GET /recommendations/{id}` | tidak ada (hasil hitungan) | `DELETE /recommendations/{id}` (204) |
+
+Aturan penghapusan: hapus bersifat permanen. Versi yang **aktif** atau **sedang diproses** tidak bisa dihapus (409).
+Riwayat rekomendasi tetap utuh setelah versinya dihapus (`recommendation.version_id` menjadi NULL; hasilnya sudah
+tersimpan di riwayat). Mengaktifkan satu versi otomatis menonaktifkan versi lain. Hapus rekomendasi milik orang lain
+dijawab 404. Login dan registrasi (`/auth/*`) tetap berbentuk aksi, lazim untuk autentikasi.
 
 ## Frontend
 
