@@ -6,6 +6,8 @@ import Kartu from '../components/Kartu.astro';
 
 <Aplikasi judul="Riwayat" sub="Rekomendasi yang pernah Anda minta.">
   <div class="halaman" id="halaman">
+    <p class="pesan pesan--sukses" id="sukses" role="status" hidden></p>
+    <p class="pesan pesan--galat" id="galat-aksi" role="alert" hidden></p>
     <Keadaan memuat="Memuat riwayat">
       <Fragment slot="galat-aksi"><button class="tombol tombol--sekunder" type="button" id="ulang">Coba lagi</button></Fragment>
       <Fragment slot="kosong">
@@ -36,11 +38,35 @@ import Kartu from '../components/Kartu.astro';
 
   <script>
     import { api } from '../lib/api';
+    import { konfirmasi } from '../lib/konfirmasi';
     import { wajibMasuk } from '../lib/auth';
     import { $, angka, el, tampilkan, tanggal } from '../lib/ui';
     import type { RingkasRiwayat } from '../lib/types';
 
     const halaman = $('#halaman');
+    const sukses = $('#sukses');
+    const galatAksi = $('#galat-aksi');
+
+    async function hapus(r: RingkasRiwayat) {
+      galatAksi.hidden = true;
+      sukses.hidden = true;
+      try {
+        const lanjut = await konfirmasi({
+          judul: 'Hapus rekomendasi ini?',
+          pesan: `Rekomendasi tanggal ${tanggal(r.created_at)} dihapus permanen dari riwayat Anda dan tidak bisa dikembalikan.`,
+          aksi: 'Hapus',
+          bahaya: true,
+        });
+        if (!lanjut) return;
+        await api(`/recommendations/${r.id}`, { method: 'DELETE' });
+        sukses.textContent = 'Rekomendasi dihapus dari riwayat.';
+        sukses.hidden = false;
+        await muat();
+      } catch (err) {
+        galatAksi.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        galatAksi.hidden = false;
+      }
+    }
 
     async function muat() {
       tampilkan(halaman, 'memuat');
@@ -57,7 +83,15 @@ import Kartu from '../components/Kartu.astro';
               el('td', { class: 'angka' }, String(r.teknologi_dipilih.length)),
               el('td', {}, teratas?.bidang_karier ?? '-'),
               el('td', { class: 'angka' }, teratas ? angka(teratas.skor) : '-'),
-              el('td', { class: 'angka' }, el('a', { href: `/hasil/?id=${r.id}` }, 'Buka hasil')),
+              el(
+                'td',
+                { class: 'angka' },
+                (() => {
+                  const tombolHapus = el('button', { type: 'button', class: 'tombol tombol--hapus tombol--kecil' }, 'Hapus', el('span', { class: 'sr-saja' }, ` rekomendasi ${tanggal(r.created_at)}`));
+                  tombolHapus.addEventListener('click', () => hapus(r));
+                  return el('div', { class: 'baris baris--kanan' }, el('a', { href: `/hasil/?id=${r.id}` }, 'Buka hasil'), tombolHapus);
+                })(),
+              ),
             );
           }),
         );

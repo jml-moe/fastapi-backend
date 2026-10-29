@@ -8,6 +8,8 @@ import Kartu from '../../../components/Kartu.astro';
   <Fragment slot="aksi-tajuk">
     <a class="tombol tombol--sekunder" href="/kelola/versi/">Kembali ke Versi Profil</a>
     <button class="tombol" type="button" id="aktifkan" hidden>Jadikan Aktif</button>
+    <button class="tombol tombol--sekunder" type="button" id="nonaktifkan" hidden>Nonaktifkan</button>
+    <button class="tombol tombol--hapus" type="button" id="hapus" hidden>Hapus Versi</button>
   </Fragment>
 
   <div class="halaman" id="halaman">
@@ -62,12 +64,14 @@ import Kartu from '../../../components/Kartu.astro';
   <script>
     import { api } from '../../../lib/api';
     import { wajibMasuk } from '../../../lib/auth';
-    import { aktifkanVersi } from '../../../lib/versi';
+    import { aktifkanVersi, bisaDihapus, hapusVersi, nonaktifkanVersi } from '../../../lib/versi';
     import { $, angka, el, parameterUrl, pilStatus, tampilkan } from '../../../lib/ui';
     import type { VersiDetail } from '../../../lib/types';
 
     const halaman = $('#halaman');
     const tombolAktif = $<HTMLButtonElement>('#aktifkan');
+    const tombolNonaktif = $<HTMLButtonElement>('#nonaktifkan');
+    const tombolHapus = $<HTMLButtonElement>('#hapus');
     const galatAksi = $('#galat-aksi');
     let jadwal: number | undefined;
 
@@ -77,6 +81,17 @@ import Kartu from '../../../components/Kartu.astro';
     }
     const sel = (...isi: (string | number)[]) => isi.map((x) => el('td', typeof x === 'number' ? { class: 'angka' } : {}, typeof x === 'number' ? angka(x) : x));
     const nilai = (v: unknown) => (Array.isArray(v) ? v.join(', ') : typeof v === 'object' && v ? JSON.stringify(v) : String(v));
+
+    /** Jalankan satu aksi; bila jadi dilakukan (tidak dibatalkan di dialog), lanjut ke `sesudah`. */
+    async function coba(aksi: () => Promise<boolean>, sesudah: () => unknown) {
+      galatAksi.hidden = true;
+      try {
+        if (await aksi()) await sesudah();
+      } catch (err) {
+        galatAksi.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        galatAksi.hidden = false;
+      }
+    }
 
     async function muat(id: number) {
       window.clearTimeout(jadwal);
@@ -91,16 +106,11 @@ import Kartu from '../../../components/Kartu.astro';
         error.hidden = !v.error;
         error.textContent = v.error ?? '';
         tombolAktif.hidden = !(v.status === 'ready' && !v.is_active);
-        tombolAktif.onclick = async () => {
-          galatAksi.hidden = true;
-          try {
-            await aktifkanVersi(v.id);
-            await muat(v.id);
-          } catch (err) {
-            galatAksi.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
-            galatAksi.hidden = false;
-          }
-        };
+        tombolAktif.onclick = () => coba(async () => (await aktifkanVersi(v.id), true), () => muat(id));
+        tombolNonaktif.hidden = !v.is_active;
+        tombolNonaktif.onclick = () => coba(() => nonaktifkanVersi(v), () => muat(id));
+        tombolHapus.hidden = !bisaDihapus(v);
+        tombolHapus.onclick = () => coba(() => hapusVersi(v), () => location.assign(`/kelola/versi/?dihapus=${v.id}`));
 
         if (v.status === 'processing') {
           tampilkan(halaman, 'siap');

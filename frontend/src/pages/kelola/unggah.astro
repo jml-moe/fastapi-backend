@@ -16,6 +16,8 @@ import Kartu from '../../components/Kartu.astro';
     </form>
   </Kartu>
 
+  <p class="pesan pesan--sukses" id="sukses" role="status" hidden></p>
+
   <section id="kartu-status" class="kartu" hidden aria-live="polite">
     <header class="kartu__kepala">
       <div>
@@ -35,7 +37,7 @@ import Kartu from '../../components/Kartu.astro';
   <script>
     import { api } from '../../lib/api';
     import { wajibMasuk } from '../../lib/auth';
-    import { aktifkanVersi } from '../../lib/versi';
+    import { aktifkanVersi, bisaDihapus, hapusVersi } from '../../lib/versi';
     import { $, el, pilStatus } from '../../lib/ui';
     import type { VersiDetail, VersiRingkas } from '../../lib/types';
 
@@ -45,6 +47,7 @@ import Kartu from '../../components/Kartu.astro';
     const galatUnggah = $('#galat-unggah');
     const kartu = $('#kartu-status');
     const galatAksi = $('#galat-aksi');
+    const sukses = $('#sukses');
     let jadwal: number | undefined;
 
     const TEKS = {
@@ -81,6 +84,23 @@ import Kartu from '../../components/Kartu.astro';
       if (v.status !== 'processing') {
         aksi.append(el('a', { class: 'tombol tombol--sekunder', href: `/kelola/versi/detail/?id=${v.id}` }, 'Lihat Detail'));
       }
+      if (bisaDihapus(v)) {
+        const hapus = el('button', { type: 'button', class: 'tombol tombol--sekunder' }, 'Hapus Versi');
+        hapus.addEventListener('click', async () => {
+          galatAksi.hidden = true;
+          try {
+            if (await hapusVersi(v)) {
+              kartu.hidden = true;
+              sukses.textContent = `Versi ${v.id} dihapus.`;
+              sukses.hidden = false;
+            }
+          } catch (err) {
+            galatAksi.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+            galatAksi.hidden = false;
+          }
+        });
+        aksi.append(hapus);
+      }
     }
 
     async function lacak(id: number) {
@@ -109,7 +129,8 @@ import Kartu from '../../components/Kartu.astro';
       try {
         const data = new FormData();
         data.append('file', file);
-        const r = await api<{ id: number }>('/admin/datasets', { form: data });
+        const r = await api<{ id: number }>('/admin/profile-versions', { form: data });
+        sukses.hidden = true;
         form.reset();
         await lacak(r.id);
       } catch (err) {

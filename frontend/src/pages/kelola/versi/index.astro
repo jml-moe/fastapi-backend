@@ -45,8 +45,8 @@ import Kartu from '../../../components/Kartu.astro';
   <script>
     import { api } from '../../../lib/api';
     import { wajibMasuk } from '../../../lib/auth';
-    import { aktifkanVersi, macroHit3 } from '../../../lib/versi';
-    import { $, angka, el, pilStatus, tampilkan, tanggal } from '../../../lib/ui';
+    import { aktifkanVersi, bisaDihapus, hapusVersi, macroHit3, nonaktifkanVersi } from '../../../lib/versi';
+    import { $, angka, el, parameterUrl, pilStatus, tampilkan, tanggal } from '../../../lib/ui';
     import type { VersiRingkas } from '../../../lib/types';
 
     const halaman = $('#halaman');
@@ -55,12 +55,13 @@ import Kartu from '../../../components/Kartu.astro';
     const proses = $('#proses');
     let jadwal: number | undefined;
 
-    async function aktifkan(id: number) {
+    /** Jalankan satu aksi (yang bisa dibatalkan di dialog) lalu tampilkan pesannya dan muat ulang daftar. */
+    async function coba(aksi: () => Promise<boolean>, pesan: string) {
       galatAksi.hidden = true;
       sukses.hidden = true;
       try {
-        await aktifkanVersi(id);
-        sukses.textContent = `Versi ${id} sekarang aktif dan dipakai untuk rekomendasi.`;
+        if (!(await aksi())) return;
+        sukses.textContent = pesan;
         sukses.hidden = false;
         await muat();
       } catch (err) {
@@ -69,21 +70,36 @@ import Kartu from '../../../components/Kartu.astro';
       }
     }
 
+    function tombol(label: string, kelas: string, klik: () => void) {
+      const t = el('button', { type: 'button', class: `tombol ${kelas} tombol--kecil` }, label);
+      t.addEventListener('click', klik);
+      return t;
+    }
+
     function baris(v: VersiRingkas) {
       const aksi = el('td', { class: 'angka' }, el('div', { class: 'baris baris--kanan' }, el('a', { href: `/kelola/versi/detail/?id=${v.id}` }, 'Detail')));
+      const kanan = aksi.firstElementChild!;
       if (v.status === 'ready' && !v.is_active) {
-        const tombol = el('button', { type: 'button', class: 'tombol tombol--sekunder tombol--kecil' }, 'Jadikan Aktif');
-        tombol.addEventListener('click', () => aktifkan(v.id));
-        aksi.firstElementChild!.append(tombol);
+        kanan.append(
+          tombol('Jadikan Aktif', 'tombol--sekunder', () =>
+            coba(async () => (await aktifkanVersi(v.id), true), `Versi ${v.id} sekarang aktif dan dipakai untuk rekomendasi.`),
+          ),
+        );
+      }
+      if (v.is_active) {
+        kanan.append(tombol('Nonaktifkan', 'tombol--sekunder', () => coba(() => nonaktifkanVersi(v), `Versi ${v.id} dinonaktifkan.`)));
+      }
+      if (bisaDihapus(v)) {
+        kanan.append(tombol('Hapus', 'tombol--hapus', () => coba(() => hapusVersi(v), `Versi ${v.id} dihapus.`)));
       }
       const h = macroHit3(v);
       return el(
         'tr',
         {},
         el('td', { class: 'mono' }, `#${v.id}`),
-        el('td', {}, v.filename),
+        el('td', { class: 'berkas' }, v.filename),
         el('td', {}, pilStatus(v.status, v.is_active)),
-        el('td', {}, tanggal(v.created_at)),
+        el('td', { class: 'tgl' }, tanggal(v.created_at)),
         el('td', { class: 'angka' }, v.n_developer === null ? '-' : angka(v.n_developer)),
         el('td', { class: 'angka' }, h === null ? '-' : angka(h)),
         aksi,
@@ -104,6 +120,14 @@ import Kartu from '../../../components/Kartu.astro';
         $('[data-pesan-galat]', halaman).textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
         tampilkan(halaman, 'galat');
       }
+    }
+
+    // Setelah menghapus dari halaman detail, pesannya dibawa lewat ?dihapus=
+    const dihapus = parameterUrl('dihapus');
+    if (dihapus) {
+      sukses.textContent = `Versi ${dihapus} dihapus.`;
+      sukses.hidden = false;
+      history.replaceState(null, '', location.pathname);
     }
 
     $('#ulang').addEventListener('click', muat);

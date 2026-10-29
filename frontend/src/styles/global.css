@@ -331,3 +331,17 @@ select { max-width: 24rem; }
 @media (max-width: 56rem) {
   input[type='text'], input[type='email'], input[type='password'], input[type='search'], input[type='file'], select { min-height: 2.75rem; }
 }
+
+/* ---------- Dialog konfirmasi ---------- */
+.tombol--hapus { background: var(--permukaan); border-color: #e5b4b4; color: var(--galat); }
+.tombol--hapus:hover { background: var(--galat-latar); border-color: var(--galat); }
+.tombol--hapus:active { background: #fadcdc; }
+.tombol--bahaya { background: var(--galat); border-color: var(--galat); }
+.tombol--bahaya:hover { background: #7f1616; border-color: #7f1616; }
+.tombol--bahaya:active { background: #651111; }
+.dialog { width: calc(100% - 2rem); max-width: 26rem; padding: 0; color: var(--tinta); background: var(--permukaan); border: 1px solid var(--garis); border-radius: var(--r-kartu); }
+.dialog::backdrop { background: rgb(17 19 24 / 0.45); }
+.dialog__isi { padding: var(--s5); display: grid; gap: var(--s2); }
+.dialog__aksi { display: flex; flex-wrap: wrap; gap: var(--s3); justify-content: flex-end; padding: var(--s3) var(--s5) var(--s5); }
+td.berkas { min-width: 10rem; overflow-wrap: anywhere; }
+td.tgl { white-space: nowrap; }
