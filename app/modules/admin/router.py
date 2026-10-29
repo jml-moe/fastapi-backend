@@ -109,7 +109,8 @@ def aktifkan_versi(version_id: int, db: DB, _: Admin):
 
 @admin_router.get("/profiles")
 def profil_aktif(db: DB, _: Admin, top: int = 10):
-    """Profil teknologi tiap bidang pada versi aktif: `top` teknologi dengan proporsi pemakai terbesar."""
+    """Profil teknologi tiap bidang pada versi aktif: `top` teknologi dengan proporsi pemakai terbesar,
+    beserta bobot IDF-nya."""
     v = versi_aktif(db)
     if not v:
         raise HTTPException(404, "Belum ada versi profil yang aktif")
@@ -122,7 +123,7 @@ def profil_aktif(db: DB, _: Admin, top: int = 10):
                 "bidang_karier": b,
                 "n_developer": n,
                 "teknologi": [
-                    {"kode": k, "proporsi": round(float(p), 4)}
+                    {"kode": k, "proporsi": round(float(p), 4), "bobot_idf": round(float(w[k]), 4)}
                     for k, p in proporsi.loc[b].sort_values(ascending=False).head(top).items()
                 ],
             }
