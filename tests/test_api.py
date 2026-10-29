@@ -37,6 +37,17 @@ def mhs(client):
     return masuk(client, body["email"], body["password"])
 
 
+def test_me_mengembalikan_profil_tanpa_password(client, mhs, admin):
+    saya = client.get("/auth/me", headers=mhs).json()
+    assert saya["email"] == "mhs@test.local" and saya["role"] == "student"
+    assert saya["name"] == "Mhs" and "password" not in saya
+    assert client.get("/auth/me", headers=admin).json()["role"] == "admin"
+
+
+def test_me_butuh_token(client):
+    assert client.get("/auth/me").status_code in (401, 403)
+
+
 def test_mahasiswa_tidak_boleh_ke_admin(client, mhs):
     assert client.get("/admin/profile-versions", headers=mhs).status_code == 403
     assert client.get("/admin/profile-versions").status_code in (401, 403)  # tanpa token

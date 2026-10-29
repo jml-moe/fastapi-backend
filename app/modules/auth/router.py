@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 from app.models.database import User
 from app.models.engine import db_session
 from app.modules.auth.schema import LoginUser, RegisterUser
+from app.modules.auth.service import get_current_user
 from app.modules.auth.utils import generate_token, hash_password, is_password_valid
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -41,3 +42,9 @@ def login_user(body: LoginUser, db: Annotated[Session, Depends(db_session)]):
     token = generate_token({"id": user.id})
 
     return {"token": token}
+
+
+@auth_router.get("/me")
+def profil_saya(user: Annotated[User, Depends(get_current_user)]):
+    """Profil pengguna yang sedang masuk; dipakai frontend untuk nama dan peran."""
+    return {"id": user.id, "name": user.name, "email": user.email, "role": user.role}
