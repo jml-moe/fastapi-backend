@@ -345,3 +345,24 @@ select { max-width: 24rem; }
 .dialog__aksi { display: flex; flex-wrap: wrap; gap: var(--s3); justify-content: flex-end; padding: var(--s3) var(--s5) var(--s5); }
 td.berkas { min-width: 10rem; overflow-wrap: anywhere; }
 td.tgl { white-space: nowrap; }
+
+/* ---------- Tab (WAI-ARIA tablist) ---------- */
+.tab-bar { display: flex; gap: var(--s1); padding: 0 var(--s5); border-bottom: 1px solid var(--garis); overflow-x: auto; }
+.tab {
+  min-height: 2.75rem; padding: 0 var(--s3); background: none; border: 0; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; font: inherit; font-weight: 500; color: var(--redup); white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab:hover { color: var(--tinta); }
+.tab[aria-selected='true'] { color: var(--tinta); font-weight: 650; border-bottom-color: var(--tinta); }
+.panel-data { display: grid; gap: var(--s3); padding-top: var(--s4); }
+.panel-data > .kecil { padding: 0 var(--s5); }
+.gulir--data { max-height: 26rem; overflow: auto; }
+.tabel-data { font-size: 0.8125rem; width: max-content; min-width: 100%; }
+.tabel-data thead th { position: sticky; top: 0; z-index: 1; }
+.tabel-data th, .tabel-data td { padding: var(--s2) var(--s3); }
+.tabel-data th:first-child, .tabel-data td:first-child { padding-left: var(--s5); }
+.tabel-data td { max-width: 16rem; overflow-wrap: anywhere; vertical-align: top; }
+.tabel-data td.teknologi { min-width: 18rem; }
+.tabel-data .chips { gap: var(--s1); }
+.tabel-data .chip { font-size: 0.75rem; line-height: 1.4; }

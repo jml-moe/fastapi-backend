@@ -68,6 +68,22 @@ export interface Ringkasan {
     penjelasan: { parameter: string; nilai: unknown; sumber: string; alasan: string }[];
   };
 }
+export interface PratinjauMentah {
+  total: number;
+  kolom: string[];
+  baris: Record<string, string | number | null>[];
+}
+export interface BarisTerproses {
+  ResponseId: number;
+  bidang_karier: string;
+  awal_karier: boolean;
+  jumlah_teknologi: number;
+  teknologi: string[];
+}
+export interface Pratinjau {
+  mentah: PratinjauMentah;
+  terproses: { total: number; baris: BarisTerproses[] };
+}
 export interface VersiDetail {
   id: number;
   filename: string;
@@ -75,6 +91,7 @@ export interface VersiDetail {
   is_active: boolean;
   error: string | null;
   ringkasan: Ringkasan | null;
+  pratinjau: Pratinjau | null;
 }
 
 export interface TeknologiProfil {

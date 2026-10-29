@@ -58,6 +58,42 @@ import Kartu from '../../../components/Kartu.astro';
           </table>
         </div>
       </Kartu>
+
+      <section class="kartu" id="kartu-pratinjau">
+        <header class="kartu__kepala">
+          <div>
+            <h2>Pratinjau data</h2>
+            <p id="ket-pratinjau">Sampel acak dari data versi ini.</p>
+          </div>
+        </header>
+        <p class="kosong kartu__isi" id="pratinjau-kosong" hidden></p>
+        <div id="pratinjau-isi" hidden>
+          <div class="tab-bar" role="tablist" aria-label="Jenis data">
+            <button class="tab" role="tab" type="button" id="tab-mentah" aria-selected="true" aria-controls="panel-mentah">Data mentah</button>
+            <button class="tab" role="tab" type="button" id="tab-terproses" aria-selected="false" aria-controls="panel-terproses" tabindex="-1">Data setelah diproses</button>
+          </div>
+          <div class="panel-data" role="tabpanel" id="panel-mentah" aria-labelledby="tab-mentah">
+            <p class="kecil" id="ket-mentah"></p>
+            <div class="gulir gulir--data" role="region" aria-label="Tabel data mentah" tabindex="0">
+              <table class="tabel-data"><thead><tr id="kepala-mentah"></tr></thead><tbody id="baris-mentah"></tbody></table>
+            </div>
+          </div>
+          <div class="panel-data" role="tabpanel" id="panel-terproses" aria-labelledby="tab-terproses" hidden>
+            <p class="kecil" id="ket-terproses"></p>
+            <div class="gulir gulir--data" role="region" aria-label="Tabel data setelah diproses" tabindex="0">
+              <table class="tabel-data">
+                <thead>
+                  <tr>
+                    <th scope="col">ResponseId</th><th scope="col">Bidang karier</th><th scope="col">Awal karier</th>
+                    <th scope="col" class="angka">Jumlah teknologi</th><th scope="col">Teknologi</th>
+                  </tr>
+                </thead>
+                <tbody id="baris-terproses"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -65,8 +101,8 @@ import Kartu from '../../../components/Kartu.astro';
     import { api } from '../../../lib/api';
     import { wajibMasuk } from '../../../lib/auth';
     import { aktifkanVersi, bisaDihapus, hapusVersi, nonaktifkanVersi } from '../../../lib/versi';
-    import { $, angka, el, parameterUrl, pilStatus, tampilkan } from '../../../lib/ui';
-    import type { VersiDetail } from '../../../lib/types';
+    import { $, angka, el, namaTeknologi, parameterUrl, pilStatus, tampilkan } from '../../../lib/ui';
+    import type { Pratinjau, VersiDetail } from '../../../lib/types';
 
     const halaman = $('#halaman');
     const tombolAktif = $<HTMLButtonElement>('#aktifkan');
@@ -81,6 +117,69 @@ import Kartu from '../../../components/Kartu.astro';
     }
     const sel = (...isi: (string | number)[]) => isi.map((x) => el('td', typeof x === 'number' ? { class: 'angka' } : {}, typeof x === 'number' ? angka(x) : x));
     const nilai = (v: unknown) => (Array.isArray(v) ? v.join(', ') : typeof v === 'object' && v ? JSON.stringify(v) : String(v));
+
+    // ---- Pratinjau data (dua tab) ----
+    const TAB = ['mentah', 'terproses'] as const;
+    function pilihTab(nama: (typeof TAB)[number], fokus = false) {
+      for (const t of TAB) {
+        const tab = $(`#tab-${t}`);
+        const aktif = t === nama;
+        tab.setAttribute('aria-selected', String(aktif));
+        tab.tabIndex = aktif ? 0 : -1;
+        $(`#panel-${t}`).hidden = !aktif;
+        if (aktif && fokus) tab.focus();
+      }
+    }
+    for (const [i, t] of TAB.entries()) {
+      $(`#tab-${t}`).addEventListener('click', () => pilihTab(t));
+      $(`#tab-${t}`).addEventListener('keydown', (e) => {
+        const ke = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? TAB.length - 1 : null;
+        if (ke === null) return;
+        e.preventDefault();
+        pilihTab(TAB[(ke + TAB.length) % TAB.length], true);
+      });
+    }
+
+    const sel2 = (v: string | number | null) =>
+      el('td', {}, v === null || v === '' ? el('span', { class: 'redup' }, 'kosong') : typeof v === 'number' ? String(v) : v);
+
+    function gambarPratinjau(v: VersiDetail) {
+      const kosong = $('#pratinjau-kosong');
+      const isi = $('#pratinjau-isi');
+      const pr: Pratinjau | null = v.pratinjau;
+      if (!pr) {
+        kosong.textContent =
+          v.status === 'processing'
+            ? 'Pratinjau tersedia setelah pemrosesan selesai.'
+            : v.status === 'failed'
+              ? 'Pratinjau tidak tersedia karena pemrosesan gagal.'
+              : 'Pratinjau belum tersedia untuk versi ini. Unggah dataset lagi untuk membuatnya.';
+        kosong.hidden = false;
+        isi.hidden = true;
+        return;
+      }
+      kosong.hidden = true;
+      isi.hidden = false;
+      const { mentah, terproses } = pr;
+      $('#ket-pratinjau').textContent = 'Sampel acak; berkas unggahan asli tidak disimpan.';
+      $('#ket-mentah').textContent = `${angka(mentah.baris.length)} dari ${angka(mentah.total)} baris dataset. Hanya ${mentah.kolom.length} kolom yang dibaca sistem.`;
+      $('#kepala-mentah').replaceChildren(...mentah.kolom.map((k) => el('th', { scope: 'col' }, k)));
+      $('#baris-mentah').replaceChildren(...mentah.baris.map((b) => el('tr', {}, ...mentah.kolom.map((k) => sel2(b[k] ?? null)))));
+      $('#ket-terproses').textContent = `${angka(terproses.baris.length)} dari ${angka(terproses.total)} developer yang lolos penyaringan.`;
+      $('#baris-terproses').replaceChildren(
+        ...terproses.baris.map((b) =>
+          el(
+            'tr',
+            {},
+            el('td', { class: 'mono' }, String(b.ResponseId)),
+            el('td', {}, b.bidang_karier),
+            el('td', {}, b.awal_karier ? 'Ya' : 'Tidak'),
+            el('td', { class: 'angka' }, String(b.jumlah_teknologi)),
+            el('td', { class: 'teknologi' }, el('ul', { class: 'chips' }, ...b.teknologi.map((k) => el('li', { class: 'chip' }, namaTeknologi(k))))),
+          ),
+        ),
+      );
+    }
 
     /** Jalankan satu aksi; bila jadi dilakukan (tidak dibatalkan di dialog), lanjut ke `sesudah`. */
     async function coba(aksi: () => Promise<boolean>, sesudah: () => unknown) {
@@ -111,6 +210,8 @@ import Kartu from '../../../components/Kartu.astro';
         tombolNonaktif.onclick = () => coba(() => nonaktifkanVersi(v), () => muat(id));
         tombolHapus.hidden = !bisaDihapus(v);
         tombolHapus.onclick = () => coba(() => hapusVersi(v), () => location.assign(`/kelola/versi/?dihapus=${v.id}`));
+
+        gambarPratinjau(v);
 
         if (v.status === 'processing') {
           tampilkan(halaman, 'siap');
