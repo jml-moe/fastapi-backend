@@ -27,6 +27,8 @@ class ProfileVersion(SQLModel, table=True):
     created_at: datetime = Field(default_factory=_now)
     # penyaringan, jumlah per bidang, parameter beserta alasannya, metrik evaluasi
     ringkasan: dict | None = Field(default=None, sa_column=Column(JSON))
+    # sampel baris mentah dan terproses (berkas unggahan tidak disimpan); null pada versi lama
+    pratinjau: dict | None = Field(default=None, sa_column=Column(JSON))
     # IDF dan profil 12 bidang (dipakai saat rekomendasi)
     model: dict | None = Field(default=None, sa_column=Column(JSON))
 

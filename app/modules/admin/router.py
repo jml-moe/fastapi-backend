@@ -31,6 +31,7 @@ def proses_dataset(version_id: int, path: str):
         try:
             hasil = bangun_versi_profil(muat_dataset(path))
             version.ringkasan, version.model = serialisasi(hasil)
+            version.pratinjau = hasil.pratinjau
             version.status = "ready"
         except KolomTidakLengkap as e:
             version.status, version.error = "failed", str(e)
@@ -92,6 +93,7 @@ def detail_versi(version_id: int, db: DB, _: Admin):
         "is_active": v.is_active,
         "error": v.error,
         "ringkasan": v.ringkasan,
+        "pratinjau": v.pratinjau,
     }
 
 

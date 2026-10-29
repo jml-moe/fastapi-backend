@@ -11,6 +11,7 @@ import pandas as pd
 
 from app.ml.evaluate import evaluasi_lengkap
 from app.ml.params import Params
+from app.ml.pratinjau import buat_pratinjau
 from app.ml.preprocess import bangun_data_final, daftar_teknologi, muat_dataset
 from app.ml.profile import bentuk_profil, hitung_idf
 
@@ -25,6 +26,7 @@ class HasilVersi:
     P: pd.DataFrame  # profil bidang (baris urut dari developer terbanyak)
     norma_P: pd.Series
     metrik: dict
+    pratinjau: dict  # sampel baris mentah dan terproses untuk Admin
 
     def ringkasan(self) -> dict:
         """Bagian yang dapat disimpan sebagai JSON (tanpa matriks)."""
@@ -61,6 +63,7 @@ def bangun_versi_profil(df: pd.DataFrame, params: Params | None = None) -> Hasil
         P=P,
         norma_P=norma_P,
         metrik=metrik,
+        pratinjau=buat_pratinjau(df, data, params.seed),
     )
 
 

@@ -29,6 +29,7 @@ class DataFinal:
     awal: pd.Series  # True bila developer awal karier
     log: list[dict]  # tabel penyaringan (tahap, alasan, sisa, terbuang)
     per_bidang: pd.DataFrame  # jumlah developer semua dan awal karier per bidang
+    id_responden: pd.Series  # ResponseId, sejajar dengan baris X (untuk pratinjau data)
 
 
 class KolomTidakLengkap(ValueError):
@@ -107,13 +108,16 @@ def bangun_data_final(df: pd.DataFrame, params: Params) -> DataFinal:
     )  # WorkExp kosong -> False
     X = encode(data).reset_index(drop=True)
     label = data["DevType"].reset_index(drop=True).rename("bidang_karier")
+    id_responden = data["ResponseId"].reset_index(drop=True)
     per_bidang = (
         pd.DataFrame({"bidang": label, "awal_karier": awal})
         .groupby("bidang")
         .agg(semua=("awal_karier", "size"), awal_karier=("awal_karier", "sum"))
         .sort_values("semua", ascending=False)
     )
-    return DataFinal(X=X, label=label, awal=awal, log=log, per_bidang=per_bidang)
+    return DataFinal(
+        X=X, label=label, awal=awal, log=log, per_bidang=per_bidang, id_responden=id_responden
+    )
 
 
 def daftar_teknologi(X: pd.DataFrame) -> pd.DataFrame:
