@@ -1,0 +1,24 @@
+---
+// Kerangka halaman tamu (beranda, masuk, daftar, 404): kotak terpusat tanpa sidebar.
+import Base from './Base.astro';
+
+interface Props {
+  judul: string;
+  lebar?: 'sempit' | 'lebar';
+}
+
+const { judul, lebar = 'sempit' } = Astro.props;
+---
+
+<Base judul={judul}>
+  <a class="lompat" href="#isi">Lewati ke konten</a>
+  <div class="polos">
+    <a class="merek" href="/">
+      <span class="merek__nama">Rekomendasi Karier</span>
+      <span class="merek__sub">Bidang karier developer</span>
+    </a>
+    <main class:list={['polos__kotak', { 'polos__kotak--lebar': lebar === 'lebar' }]} id="isi" tabindex="-1">
+      <slot />
+    </main>
+  </div>
+</Base>

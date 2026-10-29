@@ -1,0 +1,137 @@
+---
+import Aplikasi from '../../layouts/Aplikasi.astro';
+import Kartu from '../../components/Kartu.astro';
+---
+
+<Aplikasi judul="Unggah Dataset" sub="Unggah dataset survei (.xlsx atau .csv). Pemrosesan berjalan di latar belakang dan memakan sekitar 45 detik.">
+  <Kartu judul="Berkas dataset" sub="Setiap unggahan membentuk satu versi profil baru.">
+    <form id="form" class="tumpuk" novalidate>
+      <div class="bidang">
+        <label class="label" for="berkas">Berkas</label>
+        <input id="berkas" name="file" type="file" accept=".xlsx,.csv" required aria-describedby="petunjuk-berkas" />
+        <span class="petunjuk" id="petunjuk-berkas">Format .xlsx atau .csv.</span>
+      </div>
+      <p class="pesan pesan--galat" id="galat-unggah" role="alert" hidden></p>
+      <div class="baris"><button class="tombol" type="submit" id="unggah">Unggah dan Proses</button></div>
+    </form>
+  </Kartu>
+
+  <section id="kartu-status" class="kartu" hidden aria-live="polite">
+    <header class="kartu__kepala">
+      <div>
+        <h2>Status pemrosesan</h2>
+        <p id="status-nama"></p>
+      </div>
+      <span id="status-pil"></span>
+    </header>
+    <div class="kartu__isi tumpuk">
+      <p id="status-teks"></p>
+      <p class="pesan pesan--galat" id="status-galat" hidden></p>
+      <p class="pesan pesan--galat" id="galat-aksi" role="alert" hidden></p>
+      <div class="baris" id="status-aksi"></div>
+    </div>
+  </section>
+
+  <script>
+    import { api } from '../../lib/api';
+    import { wajibMasuk } from '../../lib/auth';
+    import { aktifkanVersi } from '../../lib/versi';
+    import { $, el, pilStatus } from '../../lib/ui';
+    import type { VersiDetail, VersiRingkas } from '../../lib/types';
+
+    const form = $<HTMLFormElement>('#form');
+    const berkas = $<HTMLInputElement>('#berkas');
+    const unggah = $<HTMLButtonElement>('#unggah');
+    const galatUnggah = $('#galat-unggah');
+    const kartu = $('#kartu-status');
+    const galatAksi = $('#galat-aksi');
+    let jadwal: number | undefined;
+
+    const TEKS = {
+      processing: 'Dataset sedang diproses. Halaman ini diperbarui otomatis; Anda boleh membukanya lagi nanti.',
+      ready: 'Selesai. Versi ini siap dijadikan aktif.',
+      failed: 'Pemrosesan gagal.',
+    } as const;
+
+    function gambar(v: VersiDetail) {
+      kartu.hidden = false;
+      $('#status-nama').textContent = `Versi ${v.id}: ${v.filename}`;
+      $('#status-pil').replaceChildren(pilStatus(v.status, v.is_active));
+      $('#status-teks').textContent = v.is_active ? 'Versi ini aktif dan dipakai untuk rekomendasi.' : TEKS[v.status];
+      const galat = $('#status-galat');
+      galat.hidden = !v.error;
+      galat.textContent = v.error ?? '';
+
+      const aksi = $('#status-aksi');
+      aksi.replaceChildren();
+      if (v.status === 'ready' && !v.is_active) {
+        const tombol = el('button', { type: 'button', class: 'tombol' }, 'Jadikan Aktif');
+        tombol.addEventListener('click', async () => {
+          galatAksi.hidden = true;
+          try {
+            await aktifkanVersi(v.id);
+            await lacak(v.id);
+          } catch (err) {
+            galatAksi.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+            galatAksi.hidden = false;
+          }
+        });
+        aksi.append(tombol);
+      }
+      if (v.status !== 'processing') {
+        aksi.append(el('a', { class: 'tombol tombol--sekunder', href: `/kelola/versi/detail/?id=${v.id}` }, 'Lihat Detail'));
+      }
+    }
+
+    async function lacak(id: number) {
+      window.clearTimeout(jadwal);
+      try {
+        const v = await api<VersiDetail>(`/admin/profile-versions/${id}`);
+        gambar(v);
+        if (v.status === 'processing') jadwal = window.setTimeout(() => lacak(id), 4000);
+      } catch (err) {
+        galatAksi.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        galatAksi.hidden = false;
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      galatUnggah.hidden = true;
+      const file = berkas.files?.[0];
+      if (!file) {
+        galatUnggah.textContent = 'Pilih berkas dataset lebih dulu.';
+        galatUnggah.hidden = false;
+        return;
+      }
+      unggah.disabled = true;
+      unggah.textContent = 'Mengunggah';
+      try {
+        const data = new FormData();
+        data.append('file', file);
+        const r = await api<{ id: number }>('/admin/datasets', { form: data });
+        form.reset();
+        await lacak(r.id);
+      } catch (err) {
+        galatUnggah.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        galatUnggah.hidden = false;
+      } finally {
+        unggah.disabled = false;
+        unggah.textContent = 'Unggah dan Proses';
+      }
+    });
+
+    // Bila halaman dibuka ulang saat ada versi yang masih diproses, lanjutkan memantaunya.
+    async function lanjutkan() {
+      try {
+        const daftar = await api<VersiRingkas[]>('/admin/profile-versions');
+        const berjalan = daftar.find((v) => v.status === 'processing');
+        if (berjalan) await lacak(berjalan.id);
+      } catch {
+        /* pemantauan opsional; unggahan baru tetap bisa dilakukan */
+      }
+    }
+
+    if (wajibMasuk('admin')) lanjutkan();
+  </script>
+</Aplikasi>

@@ -1,27 +1,43 @@
 ---
-import Base from '../layouts/Base.astro';
+import Aplikasi from '../layouts/Aplikasi.astro';
 import Keadaan from '../components/Keadaan.astro';
+import Kartu from '../components/Kartu.astro';
 ---
 
-<Base judul="Riwayat">
-  <div class="tumpukan" id="halaman">
-    <h1>Riwayat rekomendasi</h1>
-
+<Aplikasi judul="Riwayat" sub="Rekomendasi yang pernah Anda minta.">
+  <div class="halaman" id="halaman">
     <Keadaan memuat="Memuat riwayat">
       <Fragment slot="galat-aksi"><button class="tombol tombol--sekunder" type="button" id="ulang">Coba lagi</button></Fragment>
       <Fragment slot="kosong">
         <p>Anda belum pernah meminta rekomendasi.</p>
-        <div class="aksi"><a class="tombol" href="/rekomendasi/">Pilih teknologi</a></div>
+        <div class="baris"><a class="tombol" href="/rekomendasi/">Pilih Teknologi</a></div>
       </Fragment>
     </Keadaan>
 
-    <ul class="peringkat-daftar" id="daftar" data-keadaan="siap" hidden></ul>
+    <div data-keadaan="siap" hidden>
+      <Kartu judul="Daftar rekomendasi" sub="Yang terbaru di atas." nol>
+        <div class="gulir" role="region" aria-label="Tabel riwayat rekomendasi" tabindex="0">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Tanggal</th>
+                <th scope="col" class="angka">Teknologi</th>
+                <th scope="col">Bidang teratas</th>
+                <th scope="col" class="angka">Skor</th>
+                <th scope="col"><span class="sr-saja">Aksi</span></th>
+              </tr>
+            </thead>
+            <tbody id="daftar"></tbody>
+          </table>
+        </div>
+      </Kartu>
+    </div>
   </div>
 
   <script>
     import { api } from '../lib/api';
     import { wajibMasuk } from '../lib/auth';
-    import { $, angka, el, namaTeknologi, tampilkan, tanggal } from '../lib/ui';
+    import { $, angka, el, tampilkan, tanggal } from '../lib/ui';
     import type { RingkasRiwayat } from '../lib/types';
 
     const halaman = $('#halaman');
@@ -33,18 +49,15 @@ import Keadaan from '../components/Keadaan.astro';
         if (data.length === 0) return tampilkan(halaman, 'kosong');
         $('#daftar').replaceChildren(
           ...data.map((r) => {
-            const top = el('ol', { class: 'daftar-bersih' });
-            for (const t of r.top) {
-              top.append(el('li', {}, el('span', {}, t.bidang_karier), el('span', { class: 'skor' }, angka(t.skor))));
-            }
-            const nama = r.teknologi_dipilih.map(namaTeknologi);
-            const ringkas = nama.length > 6 ? `${nama.slice(0, 6).join(', ')}, dan ${nama.length - 6} lainnya` : nama.join(', ');
+            const teratas = r.top[0];
             return el(
-              'li',
-              { class: 'kartu hasil' },
-              el('div', { class: 'hasil__kepala' }, el('h2', {}, tanggal(r.created_at)), el('a', { href: `/hasil/?id=${r.id}` }, 'Buka hasil lengkap')),
-              el('p', { class: 'kecil' }, `${nama.length} teknologi: ${ringkas}`),
-              top,
+              'tr',
+              {},
+              el('td', {}, tanggal(r.created_at)),
+              el('td', { class: 'angka' }, String(r.teknologi_dipilih.length)),
+              el('td', {}, teratas?.bidang_karier ?? '-'),
+              el('td', { class: 'angka' }, teratas ? angka(teratas.skor) : '-'),
+              el('td', { class: 'angka' }, el('a', { href: `/hasil/?id=${r.id}` }, 'Buka hasil')),
             );
           }),
         );
@@ -58,4 +71,4 @@ import Keadaan from '../components/Keadaan.astro';
     $('#ulang').addEventListener('click', muat);
     if (wajibMasuk()) muat();
   </script>
-</Base>
+</Aplikasi>

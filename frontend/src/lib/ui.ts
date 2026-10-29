@@ -42,6 +42,24 @@ export function tanggal(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : fTanggal.format(d);
 }
 
+/** Inisial dua huruf dari nama untuk avatar. */
+export function inisial(nama: string): string {
+  const bagian = nama.trim().split(/\s+/).filter(Boolean);
+  if (bagian.length === 0) return '?';
+  const huruf = bagian.length === 1 ? bagian[0].slice(0, 2) : bagian[0][0] + bagian[bagian.length - 1][0];
+  return huruf.toUpperCase();
+}
+
+const LABEL_STATUS = { processing: 'Diproses', ready: 'Siap', failed: 'Gagal' } as const;
+const KELAS_STATUS = { processing: 'pil--proses', ready: 'pil--ok', failed: 'pil--galat' } as const;
+
+/** Pil status versi profil; selalu bertulisan, tidak hanya berwarna. */
+export function pilStatus(status: keyof typeof LABEL_STATUS, aktif = false): HTMLSpanElement {
+  return aktif
+    ? el('span', { class: 'pil pil--ok' }, 'Aktif')
+    : el('span', { class: `pil ${KELAS_STATUS[status]}` }, LABEL_STATUS[status]);
+}
+
 /** "lang:Python" menjadi "Python". */
 export const namaTeknologi = (kode: string) => kode.split(':').slice(1).join(':') || kode;
 

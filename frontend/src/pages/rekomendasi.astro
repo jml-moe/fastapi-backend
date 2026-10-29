@@ -1,33 +1,36 @@
 ---
-import Base from '../layouts/Base.astro';
+import Aplikasi from '../layouts/Aplikasi.astro';
 import Keadaan from '../components/Keadaan.astro';
 ---
 
-<Base judul="Pilih teknologi">
-  <div class="tumpukan" id="halaman">
-    <div class="tumpukan--rapat">
-      <h1>Pilih teknologi yang pernah Anda pakai</h1>
-      <p class="sub">Centang minimal tiga. Semakin lengkap pilihan Anda, semakin tajam perbandingannya.</p>
-    </div>
-
+<Aplikasi judul="Pilih Teknologi" sub="Centang minimal tiga teknologi yang pernah Anda pakai.">
+  <div class="halaman" id="halaman">
     <Keadaan memuat="Memuat daftar teknologi">
       <a slot="galat-aksi" class="tombol tombol--sekunder" href="/kelola/" id="ke-kelola" hidden>Buka kelola dataset</a>
-      <Fragment slot="kosong">
-        <p>Belum ada teknologi yang bisa dipilih.</p>
-      </Fragment>
+      <Fragment slot="kosong"><p>Belum ada teknologi yang bisa dipilih.</p></Fragment>
     </Keadaan>
 
-    <form id="form" data-keadaan="siap" class="tumpukan" hidden>
-      <div class="bidang">
-        <label for="cari">Cari teknologi</label>
-        <input id="cari" type="search" autocomplete="off" aria-controls="kelompok" />
-      </div>
-      <div id="kelompok" class="tumpukan"></div>
-      <p class="kosong" id="tak-ada" hidden>Tidak ada teknologi yang cocok dengan pencarian.</p>
+    <form id="form" data-keadaan="siap" class="halaman" hidden>
+      <section class="kartu">
+        <header class="kartu__kepala">
+          <div>
+            <h2>Teknologi yang pernah dipakai</h2>
+            <p>Buka tiap kelompok, lalu centang teknologinya.</p>
+          </div>
+        </header>
+        <div class="kartu__isi tumpuk">
+          <div class="bidang">
+            <label class="label" for="cari">Cari teknologi</label>
+            <input id="cari" type="search" autocomplete="off" aria-controls="kelompok" />
+          </div>
+          <div id="kelompok" class="akordeon-daftar"></div>
+          <p class="kosong" id="tak-ada" hidden>Tidak ada teknologi yang cocok dengan pencarian.</p>
+        </div>
+      </section>
       <div class="bilah-bawah">
         <p id="hitung" role="status" aria-live="polite"></p>
         <p class="pesan pesan--galat" id="galat-kirim" role="alert" hidden></p>
-        <button class="tombol" type="submit" id="kirim" disabled>Lihat rekomendasi</button>
+        <button class="tombol" type="submit" id="kirim" disabled>Lihat Rekomendasi</button>
       </div>
     </form>
   </div>
@@ -36,10 +39,10 @@ import Keadaan from '../components/Keadaan.astro';
     import { api, ApiError } from '../lib/api';
     import { wajibMasuk } from '../lib/auth';
     import { MIN_TEKNOLOGI } from '../lib/config';
+    import { ikon } from '../lib/ikon';
     import { ambilPeran } from '../lib/sesi';
     import { $, el, tampilkan } from '../lib/ui';
     import type { DaftarTeknologi, Rekomendasi } from '../lib/types';
-
 
     const halaman = $('#halaman');
     const form = $<HTMLFormElement>('#form');
@@ -56,40 +59,58 @@ import Keadaan from '../components/Keadaan.astro';
     function perbaruiHitungan() {
       const n = terpilih().length;
       const kurang = MIN_TEKNOLOGI - n;
-      hitung.textContent =
-        kurang > 0
-          ? `${n} dipilih. Pilih ${kurang} lagi untuk melanjutkan.`
-          : `${n} teknologi dipilih.`;
+      hitung.textContent = kurang > 0 ? `${n} dipilih. Pilih ${kurang} lagi untuk melanjutkan.` : `${n} teknologi dipilih.`;
       kirim.disabled = kurang > 0;
+      for (const grup of kelompok.querySelectorAll<HTMLElement>('.akordeon')) {
+        const semua = grup.querySelectorAll('input').length;
+        const dipilih = grup.querySelectorAll('input:checked').length;
+        grup.querySelector('.akordeon__jumlah')!.textContent = `${dipilih}/${semua}`;
+      }
     }
 
     function saring() {
       const kata = cari.value.trim().toLowerCase();
       let tampil = 0;
-      for (const label of kelompok.querySelectorAll<HTMLLabelElement>('.pilihan__item')) {
-        const input = label.querySelector('input')!;
-        const cocok = !kata || (label.textContent ?? '').toLowerCase().includes(kata) || input.checked;
-        label.hidden = !cocok;
-        if (cocok) tampil++;
-      }
-      for (const set of kelompok.querySelectorAll<HTMLElement>('fieldset')) {
-        set.hidden = !set.querySelector('.pilihan__item:not([hidden])');
+      for (const grup of kelompok.querySelectorAll<HTMLDetailsElement>('.akordeon')) {
+        let cocokDiGrup = 0;
+        for (const label of grup.querySelectorAll<HTMLLabelElement>('.pilihan')) {
+          const cocok = !kata || (label.textContent ?? '').toLowerCase().includes(kata) || label.querySelector('input')!.checked;
+          label.hidden = !cocok;
+          if (cocok) cocokDiGrup++;
+        }
+        grup.hidden = cocokDiGrup === 0;
+        if (kata && cocokDiGrup > 0) grup.open = true;
+        tampil += cocokDiGrup;
       }
       takAda.hidden = tampil > 0;
     }
 
     function gambar(data: DaftarTeknologi) {
       let ada = 0;
+      let pertama = true;
       for (const [nama, daftar] of Object.entries(data)) {
         if (daftar.length === 0) continue;
         ada += daftar.length;
-        const isi = el('div', { class: 'pilihan' });
+        const isi = el('div', { class: 'akordeon__isi' });
         for (const t of daftar) {
-          isi.append(
-            el('label', { class: 'pilihan__item' }, el('input', { type: 'checkbox', value: t.kode, name: 'teknologi' }), t.nama),
-          );
+          isi.append(el('label', { class: 'pilihan' }, el('input', { type: 'checkbox', value: t.kode, name: 'teknologi' }), t.nama));
         }
-        kelompok.append(el('fieldset', { class: 'kelompok' }, el('legend', {}, `${nama} (${daftar.length})`), isi));
+        const awalan = daftar[0].kode.split(':')[0].toUpperCase();
+        const grup = el(
+          'details',
+          { class: 'akordeon', open: pertama },
+          el(
+            'summary',
+            {},
+            el('span', { class: 'kode' }, awalan),
+            el('span', { class: 'akordeon__nama' }, nama),
+            el('span', { class: 'kecil akordeon__ket' }, `(${daftar.length} teknologi)`),
+            el('span', { class: 'akordeon__sisi' }, el('span', { class: 'akordeon__jumlah' }, `0/${daftar.length}`), ikon('panah', 'ikon akordeon__panah')),
+          ),
+          isi,
+        );
+        pertama = false;
+        kelompok.append(grup);
       }
       return ada;
     }
@@ -125,11 +146,11 @@ import Keadaan from '../components/Keadaan.astro';
       } catch (err) {
         galatKirim.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
         galatKirim.hidden = false;
-        kirim.textContent = 'Lihat rekomendasi';
+        kirim.textContent = 'Lihat Rekomendasi';
         perbaruiHitungan();
       }
     });
 
     if (wajibMasuk()) muat();
   </script>
-</Base>
+</Aplikasi>

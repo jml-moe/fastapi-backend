@@ -1,0 +1,13 @@
+---
+import { IKON, type NamaIkon } from '../lib/ikon';
+
+interface Props {
+  nama: NamaIkon;
+  kelas?: string;
+}
+const { nama, kelas = 'ikon' } = Astro.props;
+---
+
+<svg class={kelas} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  {IKON[nama].map((d) => <path d={d} />)}
+</svg>

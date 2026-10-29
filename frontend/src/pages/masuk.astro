@@ -1,24 +1,27 @@
 ---
-import Base from '../layouts/Base.astro';
+import Polos from '../layouts/Polos.astro';
 ---
 
-<Base judul="Masuk" lebar="sempit">
-  <div class="tumpukan">
+<Polos judul="Masuk">
+  <div class="tumpuk--rapat">
     <h1>Masuk</h1>
-    <form id="form" class="kartu tumpukan" novalidate>
+    <p class="redup">Gunakan akun yang sudah terdaftar.</p>
+  </div>
+  <section class="kartu">
+    <form id="form" class="kartu__isi tumpuk" novalidate>
       <div class="bidang">
-        <label for="email">Email</label>
+        <label class="label" for="email">Email</label>
         <input id="email" name="email" type="email" autocomplete="email" required />
       </div>
       <div class="bidang">
-        <label for="password">Kata sandi</label>
+        <label class="label" for="password">Kata sandi</label>
         <input id="password" name="password" type="password" autocomplete="current-password" required />
       </div>
       <p class="pesan pesan--galat" id="galat" role="alert" hidden></p>
       <button class="tombol" type="submit" id="kirim">Masuk</button>
     </form>
-    <p>Belum punya akun? <a href="/daftar/">Buat akun</a></p>
-  </div>
+  </section>
+  <p class="kecil">Belum punya akun? <a href="/daftar/">Buat akun</a></p>
 
   <script>
     import { masuk } from '../lib/auth';
@@ -64,4 +67,4 @@ import Base from '../layouts/Base.astro';
       }
     });
   </script>
-</Base>
+</Polos>

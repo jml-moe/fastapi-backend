@@ -1,47 +1,35 @@
 ---
-import Base from '../layouts/Base.astro';
+import Aplikasi from '../layouts/Aplikasi.astro';
 import Keadaan from '../components/Keadaan.astro';
+import Kartu from '../components/Kartu.astro';
 ---
 
-<Base judul="Hasil rekomendasi">
-  <div class="tumpukan" id="halaman">
+<Aplikasi judul="Hasil Rekomendasi">
+  <a slot="aksi-tajuk" class="tombol" href="/rekomendasi/">Pilih Ulang</a>
+  <a slot="aksi-tajuk" class="tombol tombol--sekunder" href="/riwayat/">Lihat Riwayat</a>
+
+  <div class="halaman" id="halaman">
     <Keadaan memuat="Memuat hasil">
       <a slot="galat-aksi" class="tombol tombol--sekunder" href="/riwayat/">Lihat riwayat</a>
       <Fragment slot="kosong"><p>Rekomendasi ini tidak memuat bidang apa pun.</p></Fragment>
     </Keadaan>
 
-    <div data-keadaan="siap" class="tumpukan" hidden>
-      <div class="tumpukan--rapat">
-        <h1>Hasil rekomendasi</h1>
-        <p class="sub" id="waktu"></p>
+    <div data-keadaan="siap" class="halaman" hidden>
+      <Kartu judul="Teknologi yang Anda pilih">
         <ul class="chips" id="dipilih" aria-label="Teknologi yang Anda pilih"></ul>
-      </div>
+      </Kartu>
 
-      <section class="tumpukan" aria-labelledby="judul-top">
-        <h2 class="judul-bagian" id="judul-top">Bidang yang paling mirip</h2>
-        <ol class="peringkat-daftar" id="top"></ol>
-      </section>
+      <div id="utama" class="tumpuk"></div>
+      <div id="lainnya" class="grid-dua"></div>
 
-      <section class="tumpukan--rapat" aria-labelledby="judul-semua">
-        <h2 class="judul-bagian" id="judul-semua">Peringkat semua bidang</h2>
+      <Kartu judul="Peringkat semua bidang" sub="Skor adalah cosine similarity antara pilihan Anda dan profil teknologi bidang, dari 0 (tidak mirip) sampai 1 (sangat mirip). Skor tidak memprediksi peluang diterima kerja." nol>
         <div class="gulir" role="region" aria-label="Tabel peringkat semua bidang" tabindex="0">
           <table>
-            <thead>
-              <tr><th scope="col" class="angka">Peringkat</th><th scope="col">Bidang karier</th><th scope="col" class="angka">Skor</th></tr>
-            </thead>
+            <thead><tr><th scope="col" class="angka">Peringkat</th><th scope="col">Bidang karier</th><th scope="col" class="angka">Skor</th></tr></thead>
             <tbody id="semua"></tbody>
           </table>
         </div>
-        <p class="kecil">
-          Skor adalah cosine similarity antara pilihan Anda dan profil teknologi bidang tersebut, dari 0
-          (tidak mirip) sampai 1 (sangat mirip). Skor tidak memprediksi peluang diterima kerja.
-        </p>
-      </section>
-
-      <div class="aksi">
-        <a class="tombol" href="/rekomendasi/">Pilih ulang teknologi</a>
-        <a class="tombol tombol--sekunder" href="/riwayat/">Lihat riwayat</a>
-      </div>
+      </Kartu>
     </div>
   </div>
 
@@ -58,40 +46,39 @@ import Keadaan from '../components/Keadaan.astro';
       tampilkan(halaman, 'galat');
     }
 
-    function kartu(p: Peringkat, utama: boolean) {
-      const sumbangan = el('ul', { class: 'daftar-bersih' });
+    function kartuBidang(p: Peringkat, utama: boolean) {
+      const sumbangan = el('ul', { class: 'daftar-garis' });
       for (const s of (p.sumbangan ?? []).slice(0, 5)) {
         sumbangan.append(el('li', {}, el('span', {}, namaTeknologi(s.kode)), el('span', { class: 'skor' }, persen(s.sumbangan))));
       }
       const umum = el('ul', { class: 'chips' });
       for (const u of p.teknologi_umum ?? []) {
         umum.append(
-          el(
-            'li',
-            { class: u.dipilih ? 'chip chip--pilih' : 'chip' },
-            `${namaTeknologi(u.kode)} ${persen(u.proporsi)}`,
-            u.dipilih ? ' (Anda pilih)' : '',
-          ),
+          el('li', { class: u.dipilih ? 'chip chip--pilih' : 'chip' }, `${namaTeknologi(u.kode)} ${persen(u.proporsi)}`, u.dipilih ? ' (Anda pilih)' : ''),
         );
       }
       const meter = el('meter', { min: '0', max: '1', value: String(p.skor), 'aria-label': `Skor kemiripan ${angka(p.skor)}` });
       meter.textContent = angka(p.skor);
 
       return el(
-        'li',
-        { class: utama ? 'kartu hasil hasil--utama' : 'kartu hasil' },
+        'section',
+        { class: utama ? 'kartu kartu--utama' : 'kartu' },
         el(
-          'div',
-          { class: 'hasil__kepala' },
-          el('h3', {}, el('span', { class: 'nomor' }, `${p.peringkat}. `), p.bidang_karier),
-          el('span', { class: 'skor' }, `Skor ${angka(p.skor)}`),
+          'header',
+          { class: 'kartu__kepala' },
+          el('div', {}, el('h2', {}, el('span', { class: 'nomor' }, `${p.peringkat}.`), p.bidang_karier), el('p', {}, 'Skor kemiripan')),
+          el('span', { class: utama ? 'skor skor--besar' : 'skor' }, angka(p.skor)),
         ),
-        meter,
         el(
           'div',
-          { class: 'dua-kolom' },
-          el('div', { class: 'tumpukan--rapat' }, el('h4', { class: 'label' }, 'Teknologi Anda yang paling berperan'), sumbangan),
-          el('div', { class: 'tumpukan--rapat' }, el('h4', { class: 'label' }, 'Teknologi paling umum di bidang ini'), umum),
+          { class: 'kartu__isi tumpuk' },
+          meter,
+          el(
+            'div',
+            { class: 'grid-dua' },
+            el('div', { class: 'tumpuk--rapat' }, el('h3', { class: 'label' }, 'Teknologi Anda yang paling berperan'), sumbangan),
+            el('div', { class: 'tumpuk--rapat' }, el('h3', { class: 'label' }, 'Teknologi paling umum di bidang ini'), umum),
+          ),
         ),
       );
     }
@@ -103,10 +90,13 @@ import Keadaan from '../components/Keadaan.astro';
         const r = await api<Rekomendasi>(`/recommendations/${id}`);
         if (r.peringkat.length === 0) return tampilkan(halaman, 'kosong');
 
-        $('#waktu').textContent = `Dibuat ${tanggal(r.created_at)}`;
+        const sub = $('#sub-halaman');
+        sub.textContent = `Dibuat ${tanggal(r.created_at)}`;
+        sub.hidden = false;
         $('#dipilih').replaceChildren(...r.teknologi_dipilih.map((k) => el('li', { class: 'chip' }, namaTeknologi(k))));
         const top = r.peringkat.filter((p) => p.sumbangan);
-        $('#top').replaceChildren(...top.map((p, i) => kartu(p, i === 0)));
+        $('#utama').replaceChildren(...top.slice(0, 1).map((p) => kartuBidang(p, true)));
+        $('#lainnya').replaceChildren(...top.slice(1).map((p) => kartuBidang(p, false)));
         $('#semua').replaceChildren(
           ...r.peringkat.map((p) =>
             el('tr', {}, el('td', { class: 'angka' }, String(p.peringkat)), el('td', {}, p.bidang_karier), el('td', { class: 'angka' }, angka(p.skor))),
@@ -119,4 +109,4 @@ import Keadaan from '../components/Keadaan.astro';
     }
     if (wajibMasuk()) muat();
   </script>
-</Base>
+</Aplikasi>

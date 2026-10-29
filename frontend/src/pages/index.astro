@@ -1,37 +1,39 @@
 ---
-import Base from '../layouts/Base.astro';
+import Polos from '../layouts/Polos.astro';
 ---
 
-<Base judul="Beranda">
-  <div class="tumpukan">
-    <h1>Bidang karier developer yang cocok dengan teknologi yang Anda kuasai</h1>
-    <p class="sub">
-      Pilih minimal tiga teknologi yang pernah Anda pakai. Sistem membandingkannya dengan profil
-      teknologi developer di tiap bidang karier pada Stack Overflow Developer Survey 2025, lalu
-      menampilkan tiga bidang yang paling mirip.
+<Polos judul="Beranda" lebar="lebar">
+  <div class="tumpuk">
+    <h1 class="judul-besar">Bidang karier developer yang cocok dengan teknologi yang Anda kuasai</h1>
+    <p class="redup">
+      Pilih minimal tiga teknologi yang pernah Anda pakai. Sistem membandingkannya dengan profil teknologi
+      developer di tiap bidang karier pada Stack Overflow Developer Survey 2025, lalu menampilkan tiga bidang
+      yang paling mirip.
     </p>
-    <div class="aksi" id="aksi-tamu">
+    <div class="baris" id="aksi-tamu">
       <a class="tombol" href="/masuk/">Masuk</a>
       <a class="tombol tombol--sekunder" href="/daftar/">Buat akun</a>
     </div>
-    <div class="aksi" id="aksi-masuk" hidden>
-      <a class="tombol" href="/rekomendasi/">Pilih teknologi</a>
-      <a class="tombol tombol--sekunder" href="/riwayat/">Lihat riwayat</a>
+    <div class="baris" id="aksi-masuk" hidden>
+      <a class="tombol" href="/rekomendasi/">Pilih Teknologi</a>
+      <a class="tombol tombol--sekunder" href="/riwayat/">Lihat Riwayat</a>
     </div>
+  </div>
 
-    <section class="tumpukan--rapat bagian" aria-labelledby="isi-hasil">
-      <h2 class="judul-bagian" id="isi-hasil">Yang Anda dapatkan</h2>
-      <ul class="daftar-bersih">
+  <section class="kartu">
+    <header class="kartu__kepala"><div><h2>Yang Anda dapatkan</h2></div></header>
+    <div class="kartu__isi tumpuk">
+      <ul class="daftar-garis">
         <li>Tiga bidang karier teratas beserta skor kemiripan.</li>
         <li>Teknologi pilihan Anda yang paling berperan pada setiap bidang.</li>
         <li>Peringkat seluruh bidang dan riwayat rekomendasi sebelumnya.</li>
       </ul>
       <p class="kecil">
-        Skor menunjukkan kemiripan pilihan Anda dengan profil sebuah bidang. Skor bukan jaminan
-        kecocokan atau peluang diterima kerja.
+        Skor menunjukkan kemiripan pilihan Anda dengan profil sebuah bidang. Skor bukan jaminan kecocokan
+        atau peluang diterima kerja.
       </p>
-    </section>
-  </div>
+    </div>
+  </section>
 
   <script>
     import { ambilToken } from '../lib/sesi';
@@ -40,4 +42,4 @@ import Base from '../layouts/Base.astro';
       document.getElementById('aksi-masuk')!.hidden = false;
     }
   </script>
-</Base>
+</Polos>

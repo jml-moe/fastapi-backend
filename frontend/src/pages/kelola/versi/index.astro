@@ -1,0 +1,112 @@
+---
+import Aplikasi from '../../../layouts/Aplikasi.astro';
+import Keadaan from '../../../components/Keadaan.astro';
+import Kartu from '../../../components/Kartu.astro';
+---
+
+<Aplikasi judul="Versi Profil" sub="Setiap unggahan dataset membentuk satu versi. Hanya satu versi yang aktif.">
+  <a slot="aksi-tajuk" class="tombol" href="/kelola/unggah/">Unggah Dataset</a>
+
+  <div class="halaman" id="halaman">
+    <p class="pesan pesan--info" id="proses" role="status" hidden>Ada versi yang sedang diproses. Daftar diperbarui otomatis.</p>
+    <p class="pesan pesan--sukses" id="sukses" role="status" hidden></p>
+    <p class="pesan pesan--galat" id="galat-aksi" role="alert" hidden></p>
+
+    <Keadaan memuat="Memuat daftar versi">
+      <Fragment slot="galat-aksi"><button class="tombol tombol--sekunder" type="button" id="ulang">Coba lagi</button></Fragment>
+      <Fragment slot="kosong">
+        <p>Belum ada versi profil. Unggah dataset untuk membuat yang pertama.</p>
+        <div class="baris"><a class="tombol" href="/kelola/unggah/">Unggah Dataset</a></div>
+      </Fragment>
+    </Keadaan>
+
+    <div data-keadaan="siap" hidden>
+      <Kartu judul="Semua versi" nol>
+        <div class="gulir" role="region" aria-label="Tabel versi profil" tabindex="0">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Berkas</th>
+                <th scope="col">Status</th>
+                <th scope="col">Dibuat</th>
+                <th scope="col" class="angka">Developer</th>
+                <th scope="col" class="angka">Hit@3 (3 teknologi)</th>
+                <th scope="col"><span class="sr-saja">Aksi</span></th>
+              </tr>
+            </thead>
+            <tbody id="versi"></tbody>
+          </table>
+        </div>
+      </Kartu>
+    </div>
+  </div>
+
+  <script>
+    import { api } from '../../../lib/api';
+    import { wajibMasuk } from '../../../lib/auth';
+    import { aktifkanVersi, hit3 } from '../../../lib/versi';
+    import { $, angka, el, pilStatus, tampilkan, tanggal } from '../../../lib/ui';
+    import type { VersiRingkas } from '../../../lib/types';
+
+    const halaman = $('#halaman');
+    const galatAksi = $('#galat-aksi');
+    const sukses = $('#sukses');
+    const proses = $('#proses');
+    let jadwal: number | undefined;
+
+    async function aktifkan(id: number) {
+      galatAksi.hidden = true;
+      sukses.hidden = true;
+      try {
+        await aktifkanVersi(id);
+        sukses.textContent = `Versi ${id} sekarang aktif dan dipakai untuk rekomendasi.`;
+        sukses.hidden = false;
+        await muat();
+      } catch (err) {
+        galatAksi.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        galatAksi.hidden = false;
+      }
+    }
+
+    function baris(v: VersiRingkas) {
+      const aksi = el('td', { class: 'angka' }, el('div', { class: 'baris baris--kanan' }, el('a', { href: `/kelola/versi/detail/?id=${v.id}` }, 'Detail')));
+      if (v.status === 'ready' && !v.is_active) {
+        const tombol = el('button', { type: 'button', class: 'tombol tombol--sekunder tombol--kecil' }, 'Jadikan Aktif');
+        tombol.addEventListener('click', () => aktifkan(v.id));
+        aksi.firstElementChild!.append(tombol);
+      }
+      const h = hit3(v);
+      return el(
+        'tr',
+        {},
+        el('td', { class: 'mono' }, `#${v.id}`),
+        el('td', {}, v.filename),
+        el('td', {}, pilStatus(v.status, v.is_active)),
+        el('td', {}, tanggal(v.created_at)),
+        el('td', { class: 'angka' }, v.n_developer === null ? '-' : angka(v.n_developer)),
+        el('td', { class: 'angka' }, h === null ? '-' : angka(h)),
+        aksi,
+      );
+    }
+
+    async function muat() {
+      window.clearTimeout(jadwal);
+      try {
+        const data = await api<VersiRingkas[]>('/admin/profile-versions');
+        const berjalan = data.some((v) => v.status === 'processing');
+        proses.hidden = !berjalan;
+        if (berjalan) jadwal = window.setTimeout(muat, 4000);
+        if (data.length === 0) return tampilkan(halaman, 'kosong');
+        $('#versi').replaceChildren(...data.map(baris));
+        tampilkan(halaman, 'siap');
+      } catch (err) {
+        $('[data-pesan-galat]', halaman).textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        tampilkan(halaman, 'galat');
+      }
+    }
+
+    $('#ulang').addEventListener('click', muat);
+    if (wajibMasuk('admin')) muat();
+  </script>
+</Aplikasi>

@@ -1,0 +1,55 @@
+---
+// Kerangka halaman yang butuh login: sidebar kiri (menu menurut peran, kartu pengguna), tajuk halaman, isi.
+// Di layar sempit sidebar menjadi laci yang dibuka dari bilah atas.
+import Base from './Base.astro';
+import Ikon from '../components/Ikon.astro';
+
+interface Props {
+  judul: string;
+  sub?: string;
+}
+
+const { judul, sub = '' } = Astro.props;
+---
+
+<Base judul={judul}>
+  <a class="lompat" href="#isi">Lewati ke konten</a>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Menu samping">
+      <div class="sidebar__merek">
+        <a href="/">
+          <span class="merek__nama">Rekomendasi Karier</span>
+          <span class="merek__sub">Bidang karier developer</span>
+        </a>
+      </div>
+      <nav class="sidebar__menu" id="menu-samping" aria-label="Utama"></nav>
+      <div class="sidebar__bawah" id="bawah-sidebar"></div>
+    </aside>
+    <div class="tirai" id="tirai"></div>
+
+    <div class="app__utama" id="app-utama">
+      <div class="bilah-atas">
+        <button class="tombol tombol--sekunder tombol--kecil" type="button" id="buka-menu" aria-label="Buka menu" aria-expanded="false" aria-controls="sidebar">
+          <Ikon nama="menu" />
+        </button>
+        <span class="merek__nama">Rekomendasi Karier</span>
+      </div>
+      <main class="konten" id="isi" tabindex="-1">
+        <div class="konten__dalam">
+          <header class="tajuk-halaman">
+            <div>
+              <h1>{judul}</h1>
+              <p id="sub-halaman" hidden={!sub}>{sub}</p>
+            </div>
+            <div class="baris"><slot name="aksi-tajuk" /></div>
+          </header>
+          <slot />
+        </div>
+      </main>
+    </div>
+  </div>
+  <script>
+    import { pasangShell } from '../lib/shell';
+    pasangShell();
+  </script>
+</Base>

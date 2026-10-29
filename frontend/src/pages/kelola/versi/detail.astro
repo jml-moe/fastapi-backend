@@ -1,74 +1,75 @@
 ---
-import Base from '../../layouts/Base.astro';
-import Keadaan from '../../components/Keadaan.astro';
+import Aplikasi from '../../../layouts/Aplikasi.astro';
+import Keadaan from '../../../components/Keadaan.astro';
+import Kartu from '../../../components/Kartu.astro';
 ---
 
-<Base judul="Detail versi profil">
-  <div class="tumpukan" id="halaman">
-    <p><a href="/kelola/">Kembali ke kelola dataset</a></p>
+<Aplikasi judul="Detail Versi Profil">
+  <Fragment slot="aksi-tajuk">
+    <a class="tombol tombol--sekunder" href="/kelola/versi/">Kembali ke Versi Profil</a>
+    <button class="tombol" type="button" id="aktifkan" hidden>Jadikan Aktif</button>
+  </Fragment>
 
+  <div class="halaman" id="halaman">
     <Keadaan memuat="Memuat detail versi">
-      <a slot="galat-aksi" class="tombol tombol--sekunder" href="/kelola/">Ke kelola dataset</a>
+      <a slot="galat-aksi" class="tombol tombol--sekunder" href="/kelola/versi/">Ke daftar versi</a>
       <Fragment slot="kosong"><p>Versi ini belum punya ringkasan.</p></Fragment>
     </Keadaan>
 
-    <div data-keadaan="siap" class="tumpukan" hidden>
-      <div class="tumpukan--rapat">
-        <h1 id="judul"></h1>
-        <p id="status" class="status"></p>
-        <p class="pesan pesan--galat" id="error" hidden></p>
-      </div>
+    <div data-keadaan="siap" class="halaman" hidden>
+      <div class="baris"><span id="status"></span><p class="kecil" id="info"></p></div>
+      <p class="pesan pesan--galat" id="error" hidden></p>
+      <p class="pesan pesan--galat" id="galat-aksi" role="alert" hidden></p>
 
-      <section class="tumpukan--rapat" aria-labelledby="j-saring">
-        <h2 class="judul-bagian" id="j-saring">Penyaringan data</h2>
+      <Kartu judul="Penyaringan data" sub="Tahap yang dilalui dataset sebelum profil dibentuk." nol>
         <div class="gulir" role="region" aria-label="Tabel penyaringan" tabindex="0">
           <table>
             <thead><tr><th scope="col">Tahap</th><th scope="col">Alasan</th><th scope="col" class="angka">Sisa</th><th scope="col" class="angka">Terbuang</th></tr></thead>
             <tbody id="saring"></tbody>
           </table>
         </div>
-      </section>
+      </Kartu>
 
-      <section class="tumpukan--rapat" aria-labelledby="j-bidang">
-        <h2 class="judul-bagian" id="j-bidang">Developer per bidang</h2>
+      <Kartu judul="Developer per bidang" nol>
         <div class="gulir" role="region" aria-label="Tabel developer per bidang" tabindex="0">
           <table>
             <thead><tr><th scope="col">Bidang</th><th scope="col" class="angka">Semua</th><th scope="col" class="angka">Awal karier</th></tr></thead>
             <tbody id="bidang"></tbody>
           </table>
         </div>
-      </section>
+      </Kartu>
 
-      <section class="tumpukan--rapat" aria-labelledby="j-evaluasi">
-        <h2 class="judul-bagian" id="j-evaluasi">Evaluasi</h2>
+      <Kartu judul="Evaluasi" sub="Hit@3 menurut jumlah teknologi yang dipilih, dibandingkan dengan bidang terbanyak." nol>
         <div class="gulir" role="region" aria-label="Tabel evaluasi" tabindex="0">
           <table>
             <thead><tr><th scope="col">Jumlah teknologi</th><th scope="col" class="angka">Data uji</th><th scope="col" class="angka">Hit@3</th><th scope="col" class="angka">macro-Hit@3</th></tr></thead>
             <tbody id="evaluasi"></tbody>
           </table>
         </div>
-      </section>
+      </Kartu>
 
-      <section class="tumpukan--rapat" aria-labelledby="j-param">
-        <h2 class="judul-bagian" id="j-param">Parameter dan alasannya</h2>
+      <Kartu judul="Parameter dan alasannya" nol>
         <div class="gulir" role="region" aria-label="Tabel parameter" tabindex="0">
           <table>
             <thead><tr><th scope="col">Parameter</th><th scope="col">Nilai</th><th scope="col">Sumber</th><th scope="col">Alasan</th></tr></thead>
             <tbody id="param"></tbody>
           </table>
         </div>
-      </section>
+      </Kartu>
     </div>
   </div>
 
   <script>
-    import { api } from '../../lib/api';
-    import { wajibMasuk } from '../../lib/auth';
-    import { $, angka, el, parameterUrl, tampilkan } from '../../lib/ui';
-    import type { VersiDetail } from '../../lib/types';
+    import { api } from '../../../lib/api';
+    import { wajibMasuk } from '../../../lib/auth';
+    import { aktifkanVersi } from '../../../lib/versi';
+    import { $, angka, el, parameterUrl, pilStatus, tampilkan } from '../../../lib/ui';
+    import type { VersiDetail } from '../../../lib/types';
 
     const halaman = $('#halaman');
-    const LABEL = { processing: 'Sedang diproses', ready: 'Siap', failed: 'Gagal' } as const;
+    const tombolAktif = $<HTMLButtonElement>('#aktifkan');
+    const galatAksi = $('#galat-aksi');
+    let jadwal: number | undefined;
 
     function galat(teks: string) {
       $('[data-pesan-galat]', halaman).textContent = teks;
@@ -77,22 +78,33 @@ import Keadaan from '../../components/Keadaan.astro';
     const sel = (...isi: (string | number)[]) => isi.map((x) => el('td', typeof x === 'number' ? { class: 'angka' } : {}, typeof x === 'number' ? angka(x) : x));
     const nilai = (v: unknown) => (Array.isArray(v) ? v.join(', ') : typeof v === 'object' && v ? JSON.stringify(v) : String(v));
 
-    async function muat() {
-      const id = Number(parameterUrl('id'));
-      if (!Number.isInteger(id) || id <= 0) return galat('Alamat ini tidak memuat nomor versi yang valid.');
+    async function muat(id: number) {
+      window.clearTimeout(jadwal);
       try {
         const v = await api<VersiDetail>(`/admin/profile-versions/${id}`);
-        $('#judul').textContent = `Versi ${v.id}: ${v.filename}`;
-        const status = $('#status');
-        status.textContent = v.is_active ? 'Aktif' : LABEL[v.status];
-        status.className = `status status--${v.is_active ? 'aktif' : v.status}`;
+        const sub = $('#sub-halaman');
+        sub.textContent = `Versi ${v.id}: ${v.filename}`;
+        sub.hidden = false;
+        $('#status').replaceChildren(pilStatus(v.status, v.is_active));
+        $('#info').textContent = v.status === 'processing' ? 'Sedang diproses, halaman diperbarui otomatis.' : '';
         const error = $('#error');
         error.hidden = !v.error;
         error.textContent = v.error ?? '';
+        tombolAktif.hidden = !(v.status === 'ready' && !v.is_active);
+        tombolAktif.onclick = async () => {
+          galatAksi.hidden = true;
+          try {
+            await aktifkanVersi(v.id);
+            await muat(v.id);
+          } catch (err) {
+            galatAksi.textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+            galatAksi.hidden = false;
+          }
+        };
 
         if (v.status === 'processing') {
           tampilkan(halaman, 'siap');
-          window.setTimeout(muat, 4000);
+          jadwal = window.setTimeout(() => muat(id), 4000);
         }
         const r = v.ringkasan;
         if (!r) return v.status === 'processing' ? undefined : tampilkan(halaman, 'kosong');
@@ -100,9 +112,7 @@ import Keadaan from '../../components/Keadaan.astro';
         $('#saring').replaceChildren(...r.penyaringan.map((p) => el('tr', {}, ...sel(p.tahap, p.alasan, p.sisa, p.terbuang))));
         $('#bidang').replaceChildren(...r.per_bidang.map((b) => el('tr', {}, ...sel(b.bidang, b.semua, b.awal_karier))));
         const k = r.params.top_k;
-        const evaluasi = r.metrik.skenario.map((s) =>
-          el('tr', {}, ...sel(String(s.teknologi), s.n_uji, Number(s[`Hit@${k}`]), Number(s[`macro-Hit@${k}`]))),
-        );
+        const evaluasi = r.metrik.skenario.map((s) => el('tr', {}, ...sel(String(s.teknologi), s.n_uji, Number(s[`Hit@${k}`]), Number(s[`macro-Hit@${k}`]))));
         const b = r.metrik.baseline_popularitas;
         evaluasi.push(el('tr', {}, ...sel('Pembanding: bidang terbanyak', r.metrik.n_uji, Number(b[`Hit@${k}`]), Number(b[`macro-Hit@${k}`]))));
         $('#evaluasi').replaceChildren(...evaluasi);
@@ -112,6 +122,11 @@ import Keadaan from '../../components/Keadaan.astro';
         galat(err instanceof Error ? err.message : 'Terjadi kesalahan.');
       }
     }
-    if (wajibMasuk('admin')) muat();
+
+    if (wajibMasuk('admin')) {
+      const id = Number(parameterUrl('id'));
+      if (!Number.isInteger(id) || id <= 0) galat('Alamat ini tidak memuat nomor versi yang valid.');
+      else muat(id);
+    }
   </script>
-</Base>
+</Aplikasi>

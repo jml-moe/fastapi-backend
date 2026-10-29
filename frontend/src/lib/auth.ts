@@ -1,20 +1,20 @@
-import { api, ApiError } from './api';
-import { ambilPeran, ambilToken, simpanSesi, type Peran } from './sesi';
+import { api } from './api';
+import { ambilPeran, ambilToken, simpanProfil, simpanToken, type Peran } from './sesi';
 
 interface HasilLogin {
   token: string;
 }
+interface Profil {
+  name: string;
+  role: string;
+}
 
-// Backend belum punya /me dan token hanya berisi id. Peran diketahui dengan mencoba
-// satu endpoint Admin: 200 berarti Admin, 403 berarti Mahasiswa.
-async function tentukanPeran(): Promise<Peran> {
-  try {
-    await api('/admin/profile-versions');
-    return 'admin';
-  } catch (e) {
-    if (e instanceof ApiError && e.status === 403) return 'mahasiswa';
-    throw e;
-  }
+/** Ambil nama dan peran dari backend lalu simpan; dipakai saat login dan untuk sesi lama. */
+export async function muatProfil(): Promise<Peran> {
+  const saya = await api<Profil>('/auth/me');
+  const peran: Peran = saya.role === 'admin' ? 'admin' : 'mahasiswa';
+  simpanProfil(peran, saya.name);
+  return peran;
 }
 
 export async function masuk(email: string, password: string): Promise<Peran> {
@@ -22,10 +22,8 @@ export async function masuk(email: string, password: string): Promise<Peran> {
     json: { email, password },
     tanpaToken: true,
   });
-  simpanSesi(token, 'mahasiswa'); // sementara, agar panggilan berikutnya membawa token
-  const peran = await tentukanPeran();
-  simpanSesi(token, peran);
-  return peran;
+  simpanToken(token); // agar /auth/me membawa token
+  return muatProfil();
 }
 
 export async function daftar(name: string, email: string, password: string) {

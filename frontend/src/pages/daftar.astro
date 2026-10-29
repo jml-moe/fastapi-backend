@@ -1,29 +1,32 @@
 ---
-import Base from '../layouts/Base.astro';
+import Polos from '../layouts/Polos.astro';
 ---
 
-<Base judul="Buat akun" lebar="sempit">
-  <div class="tumpukan">
+<Polos judul="Buat akun">
+  <div class="tumpuk--rapat">
     <h1>Buat akun</h1>
-    <form id="form" class="kartu tumpukan" novalidate>
+    <p class="redup">Akun mahasiswa untuk meminta dan menyimpan rekomendasi.</p>
+  </div>
+  <section class="kartu">
+    <form id="form" class="kartu__isi tumpuk" novalidate>
       <div class="bidang">
-        <label for="name">Nama</label>
+        <label class="label" for="name">Nama</label>
         <input id="name" name="name" type="text" autocomplete="name" required />
       </div>
       <div class="bidang">
-        <label for="email">Email</label>
+        <label class="label" for="email">Email</label>
         <input id="email" name="email" type="email" autocomplete="email" required />
       </div>
       <div class="bidang">
-        <label for="password">Kata sandi</label>
+        <label class="label" for="password">Kata sandi</label>
         <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" required aria-describedby="petunjuk-sandi" />
         <span class="petunjuk" id="petunjuk-sandi">Minimal 8 karakter.</span>
       </div>
       <p class="pesan pesan--galat" id="galat" role="alert" hidden></p>
       <button class="tombol" type="submit" id="kirim">Buat akun</button>
     </form>
-    <p>Sudah punya akun? <a href="/masuk/">Masuk</a></p>
-  </div>
+  </section>
+  <p class="kecil">Sudah punya akun? <a href="/masuk/">Masuk</a></p>
 
   <script>
     import { daftar, masuk } from '../lib/auth';
@@ -68,4 +71,4 @@ import Base from '../layouts/Base.astro';
       }
     });
   </script>
-</Base>
+</Polos>

@@ -1,0 +1,23 @@
+---
+// Kartu dengan kepala (judul, subjudul, aksi) dan isi. `nol` untuk isi tanpa padding (tabel).
+interface Props {
+  judul: string;
+  sub?: string;
+  nol?: boolean;
+  kelas?: string;
+}
+const { judul, sub, nol = false, kelas = '' } = Astro.props;
+---
+
+<section class={`kartu ${kelas}`.trim()}>
+  <header class="kartu__kepala">
+    <div>
+      <h2>{judul}</h2>
+      {sub && <p>{sub}</p>}
+    </div>
+    <slot name="aksi" />
+  </header>
+  <div class:list={['kartu__isi', { 'kartu__isi--nol': nol }]}>
+    <slot />
+  </div>
+</section>
