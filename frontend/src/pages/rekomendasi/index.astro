@@ -1,9 +1,9 @@
 ---
-import Aplikasi from '../layouts/Aplikasi.astro';
-import Keadaan from '../components/Keadaan.astro';
+import Aplikasi from '../../layouts/Aplikasi.astro';
+import Keadaan from '../../components/Keadaan.astro';
 ---
 
-<Aplikasi judul="Pilih Teknologi" sub="Centang minimal tiga teknologi yang pernah Anda pakai.">
+<Aplikasi judul="Pilih Teknologi" sub="Pilih teknologi yang Anda kuasai, minimal tiga.">
   <div class="halaman" id="halaman">
     <Keadaan memuat="Memuat daftar teknologi">
       <a slot="galat-aksi" class="tombol tombol--sekunder" href="/kelola/" id="ke-kelola" hidden>Buka kelola dataset</a>
@@ -36,13 +36,13 @@ import Keadaan from '../components/Keadaan.astro';
   </div>
 
   <script>
-    import { api, ApiError } from '../lib/api';
-    import { wajibMasuk } from '../lib/auth';
-    import { MIN_TEKNOLOGI } from '../lib/config';
-    import { ikon } from '../lib/ikon';
-    import { ambilPeran } from '../lib/sesi';
-    import { $, el, tampilkan } from '../lib/ui';
-    import type { DaftarTeknologi, Rekomendasi } from '../lib/types';
+    import { api, ApiError } from '../../lib/api';
+    import { wajibMasuk } from '../../lib/auth';
+    import { MIN_TEKNOLOGI } from '../../lib/config';
+    import { ikon } from '../../lib/ikon';
+    import { ambilPeran } from '../../lib/sesi';
+    import { $, el, tampilkan } from '../../lib/ui';
+    import type { DaftarTeknologi, Rekomendasi } from '../../lib/types';
 
     const halaman = $('#halaman');
     const form = $<HTMLFormElement>('#form');
@@ -59,7 +59,7 @@ import Keadaan from '../components/Keadaan.astro';
     function perbaruiHitungan() {
       const n = terpilih().length;
       const kurang = MIN_TEKNOLOGI - n;
-      hitung.textContent = kurang > 0 ? `${n} dipilih. Pilih ${kurang} lagi untuk melanjutkan.` : `${n} teknologi dipilih.`;
+      hitung.textContent = `Terpilih: ${n} teknologi (minimal ${MIN_TEKNOLOGI})`;
       kirim.disabled = kurang > 0;
       for (const grup of kelompok.querySelectorAll<HTMLElement>('.akordeon')) {
         const semua = grup.querySelectorAll('input').length;

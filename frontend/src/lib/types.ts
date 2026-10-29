@@ -76,3 +76,18 @@ export interface VersiDetail {
   error: string | null;
   ringkasan: Ringkasan | null;
 }
+
+export interface TeknologiProfil {
+  kode: string;
+  proporsi: number;
+  bobot_idf: number;
+}
+export interface BidangProfil {
+  bidang_karier: string;
+  n_developer: number;
+  teknologi: TeknologiProfil[];
+}
+export interface ProfilAktif {
+  version_id: number;
+  bidang: BidangProfil[];
+}

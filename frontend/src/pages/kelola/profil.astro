@@ -1,0 +1,80 @@
+---
+import Aplikasi from '../../layouts/Aplikasi.astro';
+import Keadaan from '../../components/Keadaan.astro';
+import Kartu from '../../components/Kartu.astro';
+---
+
+<Aplikasi judul="Profil Bidang Karier" sub="Teknologi yang dipakai developer pada tiap bidang, dari versi profil yang aktif.">
+  <div class="halaman" id="halaman">
+    <Keadaan memuat="Memuat profil bidang">
+      <Fragment slot="galat-aksi"><a class="tombol tombol--sekunder" href="/kelola/versi/">Ke Versi Profil</a></Fragment>
+      <Fragment slot="kosong"><p>Versi aktif belum memuat bidang karier.</p></Fragment>
+    </Keadaan>
+
+    <div data-keadaan="siap" class="halaman" hidden>
+      <Kartu judul="Pilih bidang karier" sub="Satu bidang ditampilkan pada satu waktu.">
+        <div class="bidang">
+          <label class="label" for="bidang">Bidang karier</label>
+          <select id="bidang" aria-describedby="info-bidang"></select>
+          <span class="petunjuk" id="info-bidang"></span>
+        </div>
+      </Kartu>
+
+      <Kartu judul="Teknologi pada bidang ini" sub="Dua puluh teknologi dengan proporsi pemakaian tertinggi." nol>
+        <div class="gulir" role="region" aria-label="Tabel profil teknologi bidang" tabindex="0">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Teknologi</th>
+                <th scope="col" class="angka">Proporsi pemakaian</th>
+                <th scope="col" class="angka">Bobot IDF</th>
+              </tr>
+            </thead>
+            <tbody id="teknologi"></tbody>
+          </table>
+        </div>
+      </Kartu>
+      <p class="kecil">
+        Proporsi pemakaian adalah bagian developer di bidang ini yang memakai teknologi tersebut. Bobot IDF
+        menunjukkan seberapa khas teknologi itu: semakin jarang dipakai seluruh developer, semakin besar bobotnya.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    import { api } from '../../lib/api';
+    import { wajibMasuk } from '../../lib/auth';
+    import { $, angka, dua, el, namaTeknologi, persen, tampilkan } from '../../lib/ui';
+    import type { BidangProfil, ProfilAktif } from '../../lib/types';
+
+    const halaman = $('#halaman');
+    const pilih = $<HTMLSelectElement>('#bidang');
+    let data: ProfilAktif | null = null;
+
+    function tampilBidang() {
+      const b: BidangProfil | undefined = data?.bidang[pilih.selectedIndex];
+      if (!data || !b) return;
+      $('#info-bidang').textContent = `${angka(b.n_developer)} developer pada bidang ini. Versi profil aktif: ${data.version_id}.`;
+      $('#teknologi').replaceChildren(
+        ...b.teknologi.map((t) => el('tr', {}, el('td', {}, namaTeknologi(t.kode)), el('td', { class: 'angka' }, persen(t.proporsi)), el('td', { class: 'angka' }, dua(t.bobot_idf)))),
+      );
+    }
+
+    async function muat() {
+      tampilkan(halaman, 'memuat');
+      try {
+        data = await api<ProfilAktif>('/admin/profiles?top=20');
+        if (data.bidang.length === 0) return tampilkan(halaman, 'kosong');
+        pilih.replaceChildren(...data.bidang.map((b) => el('option', {}, b.bidang_karier)));
+        tampilBidang();
+        tampilkan(halaman, 'siap');
+      } catch (err) {
+        $('[data-pesan-galat]', halaman).textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        tampilkan(halaman, 'galat');
+      }
+    }
+
+    pilih.addEventListener('change', tampilBidang);
+    if (wajibMasuk('admin')) muat();
+  </script>
+</Aplikasi>

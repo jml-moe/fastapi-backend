@@ -4,7 +4,7 @@ import Keadaan from '../../components/Keadaan.astro';
 import Kartu from '../../components/Kartu.astro';
 ---
 
-<Aplikasi judul="Overview" sub="Ringkasan versi profil yang dipakai untuk rekomendasi.">
+<Aplikasi judul="Dashboard Admin" sub="Ringkasan versi profil yang dipakai untuk rekomendasi.">
   <div class="halaman" id="halaman">
     <Keadaan memuat="Memuat ringkasan">
       <Fragment slot="galat-aksi"><button class="tombol tombol--sekunder" type="button" id="ulang">Coba lagi</button></Fragment>
@@ -25,7 +25,7 @@ import Kartu from '../../components/Kartu.astro';
         </div>
       </Kartu>
 
-      <Kartu judul="Versi Terbaru" sub="Tiga versi paling baru." nol>
+      <Kartu judul="Riwayat Unggahan Dataset" sub="Tiga unggahan paling baru." nol>
         <a slot="aksi" class="tombol tombol--sekunder tombol--kecil" href="/kelola/versi/">Lihat semua</a>
         <div class="gulir" role="region" aria-label="Tabel versi terbaru" tabindex="0">
           <table>
@@ -49,7 +49,7 @@ import Kartu from '../../components/Kartu.astro';
   <script>
     import { api } from '../../lib/api';
     import { wajibMasuk } from '../../lib/auth';
-    import { hit3 } from '../../lib/versi';
+    import { macroHit3 } from '../../lib/versi';
     import { $, angka, el, persen, pilStatus, tampilkan, tanggal } from '../../lib/ui';
     import type { VersiDetail, VersiRingkas } from '../../lib/types';
 
@@ -75,15 +75,15 @@ import Kartu from '../../components/Kartu.astro';
         const detail = aktif ? await api<VersiDetail>(`/admin/profile-versions/${aktif.id}`) : null;
         const kotakStat = $('#stat');
         if (aktif) {
-          const h = hit3(aktif);
+          const h = macroHit3(aktif);
           kotakStat.replaceChildren(
             el(
               'div',
               { class: 'grid-stat' },
-              stat('Versi Aktif', aktif.filename, `Versi ${aktif.id}, dibuat ${tanggal(aktif.created_at)}`, { utama: true, teks: true }),
+              stat('Versi Profil Aktif', aktif.filename, `Versi ${aktif.id}, dibuat ${tanggal(aktif.created_at)}`, { utama: true, teks: true }),
               stat('Developer', aktif.n_developer === null ? '-' : angka(aktif.n_developer), 'dalam profil'),
               stat('Teknologi', detail?.ringkasan ? angka(detail.ringkasan.n_teknologi) : '-', 'dikenali sistem'),
-              stat('Hit@3', h === null ? '-' : persen(h), 'dengan 3 teknologi dipilih'),
+              stat('Macro-Hit@3', h === null ? '-' : persen(h), 'dengan 3 teknologi dipilih'),
             ),
           );
         } else {

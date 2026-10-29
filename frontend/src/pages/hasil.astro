@@ -2,6 +2,7 @@
 import Aplikasi from '../layouts/Aplikasi.astro';
 import Keadaan from '../components/Keadaan.astro';
 import Kartu from '../components/Kartu.astro';
+import Ikon from '../components/Ikon.astro';
 ---
 
 <Aplikasi judul="Hasil Rekomendasi">
@@ -19,17 +20,27 @@ import Kartu from '../components/Kartu.astro';
         <ul class="chips" id="dipilih" aria-label="Teknologi yang Anda pilih"></ul>
       </Kartu>
 
-      <div id="utama" class="tumpuk"></div>
+      <div id="teratas" class="halaman"></div>
       <div id="lainnya" class="grid-dua"></div>
 
-      <Kartu judul="Peringkat semua bidang" sub="Skor adalah cosine similarity antara pilihan Anda dan profil teknologi bidang, dari 0 (tidak mirip) sampai 1 (sangat mirip). Skor tidak memprediksi peluang diterima kerja." nol>
-        <div class="gulir" role="region" aria-label="Tabel peringkat semua bidang" tabindex="0">
-          <table>
-            <thead><tr><th scope="col" class="angka">Peringkat</th><th scope="col">Bidang karier</th><th scope="col" class="angka">Skor</th></tr></thead>
-            <tbody id="semua"></tbody>
-          </table>
+      <details class="akordeon">
+        <summary>
+          <span class="akordeon__nama">Lihat peringkat seluruh <span id="n-bidang"></span> bidang karier</span>
+          <span class="akordeon__sisi"><Ikon nama="panah" kelas="ikon akordeon__panah" /></span>
+        </summary>
+        <div class="akordeon__badan">
+          <div class="gulir" role="region" aria-label="Tabel peringkat semua bidang" tabindex="0">
+            <table>
+              <thead><tr><th scope="col" class="angka">Peringkat</th><th scope="col">Bidang karier</th><th scope="col" class="angka">Skor</th></tr></thead>
+              <tbody id="semua"></tbody>
+            </table>
+          </div>
+          <p class="kecil kaki-tabel">
+            Skor adalah cosine similarity antara pilihan Anda dan profil teknologi bidang, dari 0 (tidak mirip)
+            sampai 1 (sangat mirip). Skor tidak memprediksi peluang diterima kerja.
+          </p>
         </div>
-      </Kartu>
+      </details>
     </div>
   </div>
 
@@ -46,19 +57,17 @@ import Kartu from '../components/Kartu.astro';
       tampilkan(halaman, 'galat');
     }
 
-    function kartuBidang(p: Peringkat, utama: boolean) {
-      const sumbangan = el('ul', { class: 'daftar-garis' });
-      for (const s of (p.sumbangan ?? []).slice(0, 5)) {
-        sumbangan.append(el('li', {}, el('span', {}, namaTeknologi(s.kode)), el('span', { class: 'skor' }, persen(s.sumbangan))));
-      }
-      const umum = el('ul', { class: 'chips' });
-      for (const u of p.teknologi_umum ?? []) {
-        umum.append(
-          el('li', { class: u.dipilih ? 'chip chip--pilih' : 'chip' }, `${namaTeknologi(u.kode)} ${persen(u.proporsi)}`, u.dipilih ? ' (Anda pilih)' : ''),
-        );
-      }
+    function kartuBidang(r: Rekomendasi, p: Peringkat, utama: boolean) {
       const meter = el('meter', { min: '0', max: '1', value: String(p.skor), 'aria-label': `Skor kemiripan ${angka(p.skor)}` });
       meter.textContent = angka(p.skor);
+      const detail = el(
+        'a',
+        { class: utama ? 'tombol' : 'tombol tombol--sekunder', href: `/rekomendasi/detail/?id=${r.id}&peringkat=${p.peringkat}` },
+        'Lihat Detail',
+        el('span', { class: 'sr-saja' }, ` bidang ${p.bidang_karier}`),
+      );
+      // Kartu pertama meringkas tiga teknologi penyumbang terbesar; selengkapnya ada di halaman detail.
+      const ringkas = (p.sumbangan ?? []).slice(0, 3).map((s) => `${namaTeknologi(s.kode)} ${persen(s.sumbangan)}`).join(' · ');
 
       return el(
         'section',
@@ -73,12 +82,8 @@ import Kartu from '../components/Kartu.astro';
           'div',
           { class: 'kartu__isi tumpuk' },
           meter,
-          el(
-            'div',
-            { class: 'grid-dua' },
-            el('div', { class: 'tumpuk--rapat' }, el('h3', { class: 'label' }, 'Teknologi Anda yang paling berperan'), sumbangan),
-            el('div', { class: 'tumpuk--rapat' }, el('h3', { class: 'label' }, 'Teknologi paling umum di bidang ini'), umum),
-          ),
+          utama ? el('div', { class: 'tumpuk--rapat' }, el('h3', { class: 'label' }, 'Teknologi penyumbang skor terbesar'), el('p', { class: 'ringkas-sumbangan' }, ringkas)) : null,
+          el('div', { class: 'baris' }, detail),
         ),
       );
     }
@@ -91,12 +96,13 @@ import Kartu from '../components/Kartu.astro';
         if (r.peringkat.length === 0) return tampilkan(halaman, 'kosong');
 
         const sub = $('#sub-halaman');
-        sub.textContent = `Dibuat ${tanggal(r.created_at)}`;
+        sub.textContent = `Dihitung dari teknologi yang Anda pilih. Dibuat ${tanggal(r.created_at)}.`;
         sub.hidden = false;
         $('#dipilih').replaceChildren(...r.teknologi_dipilih.map((k) => el('li', { class: 'chip' }, namaTeknologi(k))));
         const top = r.peringkat.filter((p) => p.sumbangan);
-        $('#utama').replaceChildren(...top.slice(0, 1).map((p) => kartuBidang(p, true)));
-        $('#lainnya').replaceChildren(...top.slice(1).map((p) => kartuBidang(p, false)));
+        $('#teratas').replaceChildren(...top.slice(0, 1).map((p) => kartuBidang(r, p, true)));
+        $('#lainnya').replaceChildren(...top.slice(1).map((p) => kartuBidang(r, p, false)));
+        $('#n-bidang').textContent = String(r.peringkat.length);
         $('#semua').replaceChildren(
           ...r.peringkat.map((p) =>
             el('tr', {}, el('td', { class: 'angka' }, String(p.peringkat)), el('td', {}, p.bidang_karier), el('td', { class: 'angka' }, angka(p.skor))),

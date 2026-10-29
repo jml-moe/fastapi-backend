@@ -41,7 +41,7 @@ export function wajibMasuk(peranDiminta?: Peran): boolean {
     return false;
   }
   if (peranDiminta && ambilPeran() !== peranDiminta) {
-    location.replace('/rekomendasi/');
+    location.replace('/dashboard/');
     return false;
   }
   return true;

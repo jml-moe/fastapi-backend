@@ -15,8 +15,8 @@ import Polos from '../layouts/Polos.astro';
       <a class="tombol tombol--sekunder" href="/daftar/">Buat akun</a>
     </div>
     <div class="baris" id="aksi-masuk" hidden>
-      <a class="tombol" href="/rekomendasi/">Pilih Teknologi</a>
-      <a class="tombol tombol--sekunder" href="/riwayat/">Lihat Riwayat</a>
+      <a class="tombol" href="/dashboard/" id="ke-dashboard">Buka Dashboard</a>
+      <a class="tombol tombol--sekunder" href="/rekomendasi/">Mulai Rekomendasi</a>
     </div>
   </div>
 
@@ -36,8 +36,9 @@ import Polos from '../layouts/Polos.astro';
   </section>
 
   <script>
-    import { ambilToken } from '../lib/sesi';
+    import { ambilPeran, ambilToken } from '../lib/sesi';
     if (ambilToken()) {
+      if (ambilPeran() === 'admin') (document.getElementById('ke-dashboard') as HTMLAnchorElement).href = '/kelola/';
       document.getElementById('aksi-tamu')!.hidden = true;
       document.getElementById('aksi-masuk')!.hidden = false;
     }

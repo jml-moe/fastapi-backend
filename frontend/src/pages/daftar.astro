@@ -57,7 +57,7 @@ import Polos from '../layouts/Polos.astro';
       try {
         await daftar(name, email, password);
         await masuk(email, password);
-        location.assign('/rekomendasi/');
+        location.assign('/dashboard/');
       } catch (err) {
         tampilGalat(
           err instanceof ApiError && err.status === 409

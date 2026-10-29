@@ -209,12 +209,12 @@ a:hover { text-decoration-color: var(--tinta); }
 /* ---------- Formulir ---------- */
 .bidang { display: grid; gap: 6px; }
 .label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--redup); }
-input[type='text'], input[type='email'], input[type='password'], input[type='search'], input[type='file'] {
+input[type='text'], input[type='email'], input[type='password'], input[type='search'], input[type='file'], select {
   width: 100%; min-height: var(--tinggi-kontrol); padding: var(--s2) var(--s3); font: inherit; color: var(--tinta);
   background: var(--permukaan); border: 1px solid var(--garis-input); border-radius: var(--r-kontrol);
   transition: border-color 0.15s;
 }
-input:hover:not(:disabled) { border-color: var(--tinta); }
+input:hover:not(:disabled), select:hover:not(:disabled) { border-color: var(--tinta); }
 input:disabled { background: var(--abu-panel); color: var(--redup); }
 input[type='checkbox'] { width: 1.125rem; height: 1.125rem; accent-color: var(--tinta); flex: none; margin: 0; }
 input[type='file'] { padding: 5px; }
@@ -314,3 +314,20 @@ meter::-moz-meter-bar { background: var(--tinta); border-radius: 999px; }
 
 .sr-saja { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .baris--kanan { justify-content: flex-end; flex-wrap: nowrap; }
+
+select { max-width: 24rem; }
+.akordeon__badan { border-top: 1px solid var(--garis); background: var(--permukaan); }
+.sumbangan { list-style: none; display: grid; gap: var(--s3); }
+.sumbangan li { display: grid; grid-template-columns: minmax(6rem, 1fr) minmax(4rem, 2fr) 3.5rem; gap: var(--s3); align-items: center; }
+.sumbangan .skor { text-align: right; }
+.umum { list-style: none; display: grid; }
+.umum li { display: grid; grid-template-columns: 1fr auto auto; gap: var(--s3); align-items: center; padding: var(--s2) 0; border-top: 1px solid var(--garis); }
+.umum li:first-child { border-top: 0; }
+.ringkas-sumbangan { color: var(--redup); }
+.kaki-tabel { padding: var(--s3) var(--s5) var(--s4); }
+.kaki-kartu { margin-top: var(--s4); }
+
+/* Di akhir berkas agar mengalahkan aturan dasar kolom isian */
+@media (max-width: 56rem) {
+  input[type='text'], input[type='email'], input[type='password'], input[type='search'], input[type='file'], select { min-height: 2.75rem; }
+}

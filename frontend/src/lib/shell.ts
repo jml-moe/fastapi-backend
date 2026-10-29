@@ -14,21 +14,24 @@ interface Bagian {
   butir: Butir[];
 }
 
-const PILIH: Butir = { href: '/rekomendasi/', label: 'Pilih Teknologi', ikon: 'daftar-centang', cocok: (p) => p.startsWith('/rekomendasi/') };
-const RIWAYAT: Butir = { href: '/riwayat/', label: 'Riwayat', ikon: 'jam', cocok: (p) => p.startsWith('/riwayat/') || p.startsWith('/hasil/') };
+const DASHBOARD_MHS: Butir = { href: '/dashboard/', label: 'Dashboard', ikon: 'grid', cocok: (p) => p.startsWith('/dashboard/') };
+// Hasil dan detail rekomendasi adalah bagian dari alur Rekomendasi (struktur menu 3.6.2).
+const REKOMENDASI: Butir = { href: '/rekomendasi/', label: 'Rekomendasi', ikon: 'daftar-centang', cocok: (p) => p.startsWith('/rekomendasi/') || p.startsWith('/hasil/') };
+const RIWAYAT: Butir = { href: '/riwayat/', label: 'Riwayat', ikon: 'jam', cocok: (p) => p.startsWith('/riwayat/') };
 
 const MENU: Record<Peran, Bagian[]> = {
-  mahasiswa: [{ judul: 'Menu', butir: [PILIH, RIWAYAT] }],
+  mahasiswa: [{ judul: 'Menu', butir: [DASHBOARD_MHS, REKOMENDASI, RIWAYAT] }],
   admin: [
     {
       judul: 'Dashboard',
       butir: [
-        { href: '/kelola/', label: 'Overview', ikon: 'grid', cocok: (p) => p === '/kelola/' },
+        { href: '/kelola/', label: 'Dashboard', ikon: 'grid', cocok: (p) => p === '/kelola/' },
         { href: '/kelola/unggah/', label: 'Unggah Dataset', ikon: 'unggah', cocok: (p) => p.startsWith('/kelola/unggah/') },
         { href: '/kelola/versi/', label: 'Versi Profil', ikon: 'tumpukan', cocok: (p) => p.startsWith('/kelola/versi/') },
+        { href: '/kelola/profil/', label: 'Profil Bidang Karier', ikon: 'grafik', cocok: (p) => p.startsWith('/kelola/profil/') },
       ],
     },
-    { judul: 'Individual', butir: [PILIH, RIWAYAT] },
+    { judul: 'Individual', butir: [REKOMENDASI, RIWAYAT] },
   ],
 };
 

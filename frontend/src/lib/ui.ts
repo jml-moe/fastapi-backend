@@ -33,6 +33,9 @@ const fPersen = new Intl.NumberFormat('id-ID', { style: 'percent', maximumFracti
 const fTanggal = new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
 
 export const angka = (n: number) => fAngka.format(n);
+const fDua = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/** Dua desimal tetap, untuk kolom angka sejajar seperti bobot IDF. */
+export const dua = (n: number) => fDua.format(n);
 export const persen = (n: number) => fPersen.format(n);
 
 export function tanggal(iso: string): string {

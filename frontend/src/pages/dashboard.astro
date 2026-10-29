@@ -1,0 +1,72 @@
+---
+import Aplikasi from '../layouts/Aplikasi.astro';
+import Keadaan from '../components/Keadaan.astro';
+---
+
+<Aplikasi judul="Dashboard" sub="Mulai rekomendasi baru atau lanjutkan dari yang terakhir.">
+  <div class="halaman" id="halaman">
+    <section class="kartu kartu--utama">
+      <header class="kartu__kepala">
+        <div>
+          <h2 id="sapa">Halo</h2>
+          <p>Pilih teknologi yang Anda kuasai untuk melihat bidang karier yang paling mirip.</p>
+        </div>
+        <a class="tombol" href="/rekomendasi/">Mulai Rekomendasi</a>
+      </header>
+    </section>
+
+    <section class="kartu">
+      <header class="kartu__kepala">
+        <div>
+          <h2>Rekomendasi terakhir</h2>
+          <p id="waktu">Hasil yang paling baru Anda minta.</p>
+        </div>
+        <a class="tombol tombol--sekunder tombol--kecil" href="/riwayat/">Lihat riwayat</a>
+      </header>
+      <div class="kartu__isi">
+        <Keadaan memuat="Memuat rekomendasi terakhir">
+          <Fragment slot="galat-aksi"><button class="tombol tombol--sekunder" type="button" id="ulang">Coba lagi</button></Fragment>
+          <Fragment slot="kosong"><p>Anda belum pernah meminta rekomendasi. Pilih teknologi untuk memulai.</p></Fragment>
+        </Keadaan>
+        <div data-keadaan="siap" class="tumpuk" hidden>
+          <ol class="daftar-garis" id="terakhir"></ol>
+          <div class="baris"><a class="tombol tombol--sekunder" href="/riwayat/" id="buka-hasil">Buka Hasil Lengkap</a></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import { api } from '../lib/api';
+    import { wajibMasuk } from '../lib/auth';
+    import { ambilNama } from '../lib/sesi';
+    import { $, angka, el, tampilkan, tanggal } from '../lib/ui';
+    import type { RingkasRiwayat } from '../lib/types';
+
+    const halaman = $('#halaman');
+    const kartuTerakhir = $('.kartu:nth-of-type(2)', halaman);
+
+    async function muat() {
+      const nama = ambilNama();
+      $('#sapa').textContent = nama ? `Halo, ${nama}` : 'Halo';
+      tampilkan(kartuTerakhir, 'memuat');
+      try {
+        const data = await api<RingkasRiwayat[]>('/recommendations');
+        if (data.length === 0) return tampilkan(kartuTerakhir, 'kosong');
+        const r = data[0];
+        $('#waktu').textContent = `Dibuat ${tanggal(r.created_at)}`;
+        $('#terakhir').replaceChildren(
+          ...r.top.map((t, i) => el('li', {}, el('span', {}, el('span', { class: 'nomor' }, `${i + 1}.`), t.bidang_karier), el('span', { class: 'skor' }, angka(t.skor)))),
+        );
+        $<HTMLAnchorElement>('#buka-hasil').href = `/hasil/?id=${r.id}`;
+        tampilkan(kartuTerakhir, 'siap');
+      } catch (err) {
+        $('[data-pesan-galat]', kartuTerakhir).textContent = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+        tampilkan(kartuTerakhir, 'galat');
+      }
+    }
+
+    $('#ulang').addEventListener('click', muat);
+    if (wajibMasuk()) muat();
+  </script>
+</Aplikasi>

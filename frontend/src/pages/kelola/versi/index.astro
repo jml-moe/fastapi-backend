@@ -31,7 +31,7 @@ import Kartu from '../../../components/Kartu.astro';
                 <th scope="col">Status</th>
                 <th scope="col">Dibuat</th>
                 <th scope="col" class="angka">Developer</th>
-                <th scope="col" class="angka">Hit@3 (3 teknologi)</th>
+                <th scope="col" class="angka">Macro-Hit@3 (3 teknologi)</th>
                 <th scope="col"><span class="sr-saja">Aksi</span></th>
               </tr>
             </thead>
@@ -45,7 +45,7 @@ import Kartu from '../../../components/Kartu.astro';
   <script>
     import { api } from '../../../lib/api';
     import { wajibMasuk } from '../../../lib/auth';
-    import { aktifkanVersi, hit3 } from '../../../lib/versi';
+    import { aktifkanVersi, macroHit3 } from '../../../lib/versi';
     import { $, angka, el, pilStatus, tampilkan, tanggal } from '../../../lib/ui';
     import type { VersiRingkas } from '../../../lib/types';
 
@@ -76,7 +76,7 @@ import Kartu from '../../../components/Kartu.astro';
         tombol.addEventListener('click', () => aktifkan(v.id));
         aksi.firstElementChild!.append(tombol);
       }
-      const h = hit3(v);
+      const h = macroHit3(v);
       return el(
         'tr',
         {},

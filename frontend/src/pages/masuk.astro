@@ -36,7 +36,7 @@ import Polos from '../layouts/Polos.astro';
     function tujuan(peran: string): string {
       const lanjut = parameterUrl('lanjut');
       if (lanjut && lanjut.startsWith('/') && !lanjut.startsWith('//')) return lanjut;
-      return peran === 'admin' ? '/kelola/' : '/rekomendasi/';
+      return peran === 'admin' ? '/kelola/' : '/dashboard/';
     }
 
     form.addEventListener('submit', async (e) => {
