@@ -58,19 +58,24 @@ def test_rekomendasi_sebelum_ada_profil_aktif(client, mhs):
 
 
 def test_unggah_berkas_bukan_dataset(client, admin):
-    r = client.post("/admin/datasets", headers=admin, files={"file": ("a.txt", b"x")})
+    r = client.post("/admin/profile-versions", headers=admin, files={"file": ("a.txt", b"x")})
     assert r.status_code == 422
 
 
 def test_kolom_tidak_lengkap_menjadi_failed(client, admin):
     r = client.post(
-        "/admin/datasets", headers=admin, files={"file": ("a.csv", b"ResponseId,DevType\n1,x\n")}
+        "/admin/profile-versions",
+        headers=admin,
+        files={"file": ("a.csv", b"ResponseId,DevType\n1,x\n")},
     )
     assert r.status_code == 202
     v = client.get(f"/admin/profile-versions/{r.json()['id']}", headers=admin).json()
     assert v["status"] == "failed" and "Kolom wajib" in v["error"]
     assert (
-        client.post(f"/admin/profile-versions/{v['id']}/activate", headers=admin).status_code == 409
+        client.patch(
+            f"/admin/profile-versions/{v['id']}", json={"is_active": True}, headers=admin
+        ).status_code
+        == 409
     )
 
 
@@ -78,7 +83,7 @@ def test_kolom_tidak_lengkap_menjadi_failed(client, admin):
 def test_alur_lengkap_admin_lalu_mahasiswa(client, admin, mhs):
     # --- Admin: unggah, tunggu, aktifkan ---
     with open(DATASET, "rb") as f:
-        r = client.post("/admin/datasets", headers=admin, files={"file": (DATASET.name, f)})
+        r = client.post("/admin/profile-versions", headers=admin, files={"file": (DATASET.name, f)})
     assert r.status_code == 202
     vid = r.json()["id"]
     for _ in range(
@@ -90,7 +95,8 @@ def test_alur_lengkap_admin_lalu_mahasiswa(client, admin, mhs):
         time.sleep(1)
     assert v["status"] == "ready", v.get("error")
     assert v["ringkasan"]["n_developer"] == 16132
-    assert client.post(f"/admin/profile-versions/{vid}/activate", headers=admin).status_code == 200
+    r = client.patch(f"/admin/profile-versions/{vid}", json={"is_active": True}, headers=admin)
+    assert r.status_code == 200 and r.json()["is_active"] is True
     profil = client.get("/admin/profiles", headers=admin).json()
     assert len(profil["bidang"]) == 12
 

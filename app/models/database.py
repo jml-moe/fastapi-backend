@@ -34,6 +34,7 @@ class ProfileVersion(SQLModel, table=True):
 class Recommendation(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)
-    version_id: int = Field(foreign_key="profileversion.id")
+    # NULL setelah versinya dihapus; riwayat tetap utuh karena `hasil` menyimpan salinannya
+    version_id: int | None = Field(default=None, foreign_key="profileversion.id")
     created_at: datetime = Field(default_factory=_now)
     hasil: dict = Field(sa_column=Column(JSON))  # salinan hasil agar riwayat tetap utuh

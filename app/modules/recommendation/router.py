@@ -82,3 +82,13 @@ def detail(rec_id: int, db: DB, user: CurrentUser):
     if not r or r.user_id != user.id:
         raise HTTPException(404, "Rekomendasi tidak ditemukan")
     return {"id": r.id, "created_at": r.created_at, **r.hasil}
+
+
+@recommendation_router.delete("/recommendations/{rec_id}", status_code=status.HTTP_204_NO_CONTENT)
+def hapus(rec_id: int, db: DB, user: CurrentUser):
+    """Hapus satu riwayat rekomendasi milik sendiri; milik orang lain dijawab 404."""
+    r = db.get(Recommendation, rec_id)
+    if not r or r.user_id != user.id:
+        raise HTTPException(404, "Rekomendasi tidak ditemukan")
+    db.delete(r)
+    db.commit()
