@@ -10,7 +10,9 @@ bagian "Turunan" disusun agen dari situ dan boleh diubah. Semua token ada di
 - Warna utama: monokrom hitam mengikuti referensi (menggantikan pilihan awal biru tua).
 - Ikon menu: dipakai, selama relevan.
 - Tema: terang saja.
-- Struktur: sidebar kiri, kartu di kanan; admin dipisah menjadi Overview, Unggah Dataset, dan Versi Profil.
+- Struktur: sidebar kiri, kartu di kanan; admin dipisah menjadi Dashboard, Unggah Dataset, Versi Profil, dan
+  Profil Bidang Karier.
+- Sapaan: "Anda" (bukan "kamu" seperti pada gambar 3.7).
 
 ## Turunan
 - Dial: ENERGY 1 / RHYTHM 2 / MOTION 1.
@@ -42,10 +44,21 @@ bagian "Turunan" disusun agen dari situ dan boleh diubah. Semua token ada di
 - Ikon (R-04), ditulis sebagai garis sederhana di `frontend/src/lib/ikon.ts`: daftar centang untuk Pilih
   Teknologi (memilih beberapa item), jam untuk Riwayat (waktu lampau), grid untuk Overview (ringkasan
   berpetak), panah ke atas untuk Unggah Dataset (memasukkan berkas), tumpukan untuk Versi Profil (versi
-  berlapis), panah bawah untuk membuka akordeon dan menu pengguna.
+  berlapis), grafik batang untuk Profil Bidang Karier (proporsi pemakaian), panah bawah untuk membuka akordeon
+  dan menu pengguna.
 - Pil status (R-09): fungsional (Diproses, Siap, Aktif, Gagal) dan selalu bertulisan, tidak hanya berwarna.
 - Tanpa bayangan (R-12): hierarki dari garis dan jarak, seperti referensi.
 - Variasi ritme (R-14): kartu bidang peringkat 1 lebih besar dan berbingkai hitam; kartu Versi Aktif pada
   Overview lebih lebar dari tiga kartu angka lainnya.
 - Akordeon: ratusan teknologi dalam empat kelompok terlalu panjang bila dibuka semua; akordeon menjaga
   halaman tetap ringkas dan hitungan "dipilih/total" tetap terlihat.
+
+## Selaras dengan bagian 3.7 skripsi
+Susunan halaman mengikuti prototipe low-fi 3.7: Dashboard Mahasiswa (Gambar 3.12), hasil ringkas dengan kartu
+peringkat 1 menonjol dan tombol "Lihat Detail" (3.14), halaman Detail Rekomendasi terpisah (3.15), Profil Bidang
+Karier dengan kolom Bobot IDF (3.11), dan metrik Macro-Hit@3 (3.9, 3.10). Perbedaan yang disengaja, dan butuh
+revisi teks 3.7 bila dipertahankan: sidebar berikon dan kartu pengguna menggantikan bilah atas dan menu teks;
+akordeon dan kolom cari pada pemilihan teknologi; dataset .xlsx selain .csv; Kelola Dataset dipecah menjadi
+Unggah Dataset dan Versi Profil; halaman Detail versi profil; menu Individual untuk Admin; beranda publik;
+kartu "Teknologi yang Anda pilih" dan bilah skor pada hasil; kartu Teknologi dan Pintasan pada dashboard Admin;
+status Diproses dan Gagal; "Keluar" menggantikan "Logout"; login otomatis setelah daftar.

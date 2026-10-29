@@ -40,11 +40,14 @@ make dev          # API di :8000
 make fe-dev       # Astro di :4321, panggilan API diteruskan ke :8000
 ```
 
-Halaman tamu: `/` beranda, `/masuk/`, `/daftar/`. Mahasiswa: `/rekomendasi/` (pilih teknologi),
-`/hasil/?id=`, `/riwayat/`. Admin: `/kelola/` (Overview), `/kelola/unggah/`, `/kelola/versi/` dan
-`/kelola/versi/detail/?id=`. Semua panggilan API lewat satu fungsi di `frontend/src/lib/api.ts`; bentuk
-respons yang dibaca ada di `frontend/src/lib/types.ts`. Kerangka sidebar ada di
-`frontend/src/layouts/Aplikasi.astro` dan menu per peran di `frontend/src/lib/shell.ts`.
+Halaman tamu: `/` beranda, `/masuk/`, `/daftar/`. Mahasiswa: `/dashboard/`, `/rekomendasi/` (pilih teknologi),
+`/hasil/?id=`, `/rekomendasi/detail/?id=&peringkat=` (dasar perhitungan skor), `/riwayat/`. Admin: `/kelola/`
+(Dashboard), `/kelola/unggah/`, `/kelola/versi/` dan `/kelola/versi/detail/?id=`, `/kelola/profil/` (Profil
+Bidang Karier). Admin juga bisa memakai halaman Mahasiswa lewat menu Individual. Susunan halaman mengikuti
+bagian 3.7 skripsi (Gambar 3.7 sampai 3.15); perbedaan yang disengaja ada di `DESIGN.md`. Semua panggilan API
+lewat satu fungsi di `frontend/src/lib/api.ts`; bentuk respons yang dibaca ada di `frontend/src/lib/types.ts`.
+Kerangka sidebar ada di `frontend/src/layouts/Aplikasi.astro` dan menu per peran di
+`frontend/src/lib/shell.ts`.
 Token disimpan di `localStorage` dan dikirim sebagai header Bearer; nama dan peran diambil dari
 `GET /auth/me`. Bila `frontend/dist` belum ada, API tetap jalan tanpa frontend.
 
