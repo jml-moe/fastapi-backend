@@ -38,6 +38,14 @@ Riwayat rekomendasi tetap utuh setelah versinya dihapus (`recommendation.version
 tersimpan di riwayat). Mengaktifkan satu versi otomatis menonaktifkan versi lain. Hapus rekomendasi milik orang lain
 dijawab 404. Login dan registrasi (`/auth/*`) tetap berbentuk aksi, lazim untuk autentikasi.
 
+## Pratinjau data
+
+Berkas unggahan tidak disimpan. Saat pemrosesan, sistem menyimpan sampel acak (seed tetap) 100 baris data mentah
+(9 kolom yang dibaca) dan 100 baris data setelah diproses di kolom `profileversion.pratinjau`; ditampilkan sebagai
+dua tab di halaman Detail versi (`/kelola/versi/detail/`). Pratinjau ikut terhapus bersama versinya, dan versi
+yang dibuat sebelum fitur ini menampilkan "belum tersedia" sampai datasetnya diunggah ulang. `GET
+/admin/profile-versions/{id}` memuatnya; daftar versi tidak (ukuran).
+
 ## Frontend
 
 Frontend ada di `frontend/` (Astro, build statis, tanpa framework UI tambahan). Hasil build

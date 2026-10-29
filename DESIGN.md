@@ -62,3 +62,11 @@ akordeon dan kolom cari pada pemilihan teknologi; dataset .xlsx selain .csv; Kel
 Unggah Dataset dan Versi Profil; halaman Detail versi profil; menu Individual untuk Admin; beranda publik;
 kartu "Teknologi yang Anda pilih" dan bilah skor pada hasil; kartu Teknologi dan Pintasan pada dashboard Admin;
 status Diproses dan Gagal; "Keluar" menggantikan "Logout"; login otomatis setelah daftar.
+
+## Pratinjau data
+- Tab (Data mentah, Data setelah diproses) memakai pola WAI-ARIA tablist: panah kiri/kanan, Home, End, dan
+  tabindex bergulir. Alasan satu baris: dua tabel lebar dengan konteks yang sama paling ringkas bila berbagi satu
+  kartu, dan tab menjaga halaman Detail tetap pendek.
+- Tabel pratinjau dibatasi tinggi 26rem dengan header lengket dan lebar kolom mengikuti isinya (gulir
+  horizontal), dan kartunya diletakkan paling bawah: ringkasan penyaringan, evaluasi, dan parameter tetap
+  yang pertama terlihat. Sel kosong ditandai teks "kosong", bukan dibiarkan hampa.
